@@ -1,16 +1,71 @@
-# React + Vite
+# CollectorOS Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend de CollectorOS construido con React, Vite y MUI.
 
-Currently, two official plugins are available:
+## Stack
+- React
+- Vite
+- MUI
+- React Router
+- React Query
+- Axios
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Arquitectura
+- `app/`: configuración global
+- `features/`: módulos del sistema
+- `services/`: cliente HTTP y query client
+- `components/`: componentes compartidos
+- `hooks/`: hooks globales
+- `utils/`: helpers
 
-## React Compiler
+## Filosofía
+- Las páginas orquestan
+- Los componentes renderizan UI
+- Los hooks encapsulan lógica
+- `api/` concentra llamadas HTTP
+- Se evita mezclar lógica de negocio con JSX
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Estructura de ramas
+- `main`: rama estable
+- `develop`: rama de integración
+- `feature/*`: nuevas funcionalidades
+- `fix/*`: correcciones
+- `refactor/*`: mejoras internas
 
-## Expanding the ESLint configuration
+## Comandos
+```bash
+npm install
+npm run dev
+npm run build
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Variables de entorno
+```bash
+VITE_API_URL=http://localhost:3000/api/v1
+```
+
+## Roadmap
+
+ Base inicial con Vite
+
+ Router
+
+ MUI
+
+ React Query
+
+ App layout
+
+ Auth
+
+ Dashboard
+
+ Inventory
+
+ Wishlist
+
+ Analytics
+
+ Alerts
+
+ Forecast
