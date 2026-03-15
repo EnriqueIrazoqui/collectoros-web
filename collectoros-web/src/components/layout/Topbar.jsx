@@ -18,7 +18,6 @@ const Topbar = ({ onMenuClick }) => {
   const { user } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
 
-
   const handleOpenMenu = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -32,9 +31,8 @@ const Topbar = ({ onMenuClick }) => {
     logout();
   };
 
-
-const userLabel = user?.displayName || user?.email || "Usuario";
-const avatarLetter = userLabel.charAt(0).toUpperCase();
+  const userLabel = user?.displayName || user?.email || "Usuario";
+  const avatarLetter = userLabel.charAt(0).toUpperCase();
 
   return (
     <AppBar
