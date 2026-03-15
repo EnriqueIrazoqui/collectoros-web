@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Toolbar } from "@mui/material";
+import { Box } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import Sidebar, { drawerWidth } from "./Sidebar";
 import Topbar from "./Topbar";
@@ -27,15 +27,22 @@ const AppLayout = () => {
         sx={{
           flexGrow: 1,
           minWidth: 0,
-          p: 3,
-          mt: 8,
           ml: { xs: 0, md: `${drawerWidth}px` },
-          width: { xs: "100%", md: `calc(100% - ${drawerWidth}px)` },
+          mt: 8,
+          p: 3,
           bgcolor: "background.default",
         }}
       >
-        <Outlet />
-        <AppFooter />
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: "1400px",
+            mx: "auto",
+          }}
+        >
+          <Outlet />
+          <AppFooter />
+        </Box>
       </Box>
     </Box>
   );

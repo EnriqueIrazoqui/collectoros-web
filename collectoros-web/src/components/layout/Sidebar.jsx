@@ -13,7 +13,7 @@ import { navigationItems } from "./navigationItems";
 
 const drawerWidth = 260;
 
-const SidebarContent = () => {
+const SidebarContent = ({ onNavigate }) => {
   return (
     <Box>
       <Toolbar>
@@ -31,6 +31,7 @@ const SidebarContent = () => {
               key={item.path}
               component={NavLink}
               to={item.path}
+              onClick={onNavigate}
               sx={{
                 mx: 1,
                 mb: 0.5,
@@ -47,6 +48,7 @@ const SidebarContent = () => {
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <Icon />
               </ListItemIcon>
+
               <ListItemText primary={item.label} />
             </ListItemButton>
           );
@@ -60,17 +62,19 @@ const Sidebar = ({ mobileOpen, onClose }) => {
   return (
     <>
       <Drawer
-        variant="permanent"
-        open
+        variant="temporary"
+        open={mobileOpen}
+        onClose={onClose}
+        ModalProps={{ keepMounted: true }}
         sx={{
-          display: { xs: "none", md: "block" },
+          display: { xs: "block", md: "none" },
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
           },
         }}
       >
-        <SidebarContent />
+        <SidebarContent onNavigate={onClose} />
       </Drawer>
 
       <Drawer
