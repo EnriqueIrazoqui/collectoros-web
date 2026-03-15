@@ -9,25 +9,20 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const loginMutation = useLogin();
 
-  useEffect(() => {
-    if (hasAccessToken()) {
-      navigate("/", { replace: true });
-    }
-  }, [navigate]);
+  // useEffect(() => {
+  //   if (hasAccessToken()) {
+  //     navigate("/", { replace: true });
+  //   }
+  // }, [navigate]);
 
-  const handleLogin = async (formValues) => {
-    try {
-      const response = await loginMutation.mutateAsync(formValues);
-
-      const token = response.data.accessToken;
-
-      localStorage.setItem("collectoros_token", token);
-
-      navigate("/", { replace: true });
-    } catch (error) {
-      console.error(error);
-    }
-  };
+const handleLogin = async (formValues) => {
+  try {
+    await loginMutation.mutateAsync(formValues);
+    navigate("/", { replace: true });
+  } catch (error) {
+    console.error("Login error:", error);
+  }
+};
 
   const errorMessage =
     loginMutation.error?.response?.data?.message ||

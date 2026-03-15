@@ -11,10 +11,13 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import { useState } from "react";
 import { useLogout } from "../../features/auth/hooks/useLogout";
+import { useAuth } from "../../features/auth/hooks/useAuth";
 
 const Topbar = ({ onMenuClick }) => {
   const { logout } = useLogout();
+  const { user } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
+
 
   const handleOpenMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -28,6 +31,10 @@ const Topbar = ({ onMenuClick }) => {
     handleCloseMenu();
     logout();
   };
+
+
+const userLabel = user?.displayName || user?.email || "Usuario";
+const avatarLetter = userLabel.charAt(0).toUpperCase();
 
   return (
     <AppBar
@@ -54,9 +61,13 @@ const Topbar = ({ onMenuClick }) => {
           </Typography>
         </Box>
 
-        <Box>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Typography variant="body2" color="text.secondary">
+            {userLabel}
+          </Typography>
+
           <IconButton onClick={handleOpenMenu} size="small">
-            <Avatar sx={{ width: 36, height: 36 }}>C</Avatar>
+            <Avatar sx={{ width: 36, height: 36 }}>{avatarLetter}</Avatar>
           </IconButton>
 
           <Menu
