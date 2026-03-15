@@ -1,4 +1,13 @@
-import { Drawer, Box, Toolbar, List, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
+import {
+  Drawer,
+  Box,
+  Toolbar,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+} from "@mui/material";
 import { NavLink } from "react-router-dom";
 import { navigationItems } from "./navigationItems";
 
@@ -51,12 +60,10 @@ const Sidebar = ({ mobileOpen, onClose }) => {
   return (
     <>
       <Drawer
-        variant="temporary"
-        open={mobileOpen}
-        onClose={onClose}
-        ModalProps={{ keepMounted: true }}
+        variant="permanent"
+        open
         sx={{
-          display: { xs: "block", md: "none" },
+          display: { xs: "none", md: "block" },
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
