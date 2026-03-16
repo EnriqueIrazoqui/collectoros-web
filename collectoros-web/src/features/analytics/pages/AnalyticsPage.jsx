@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Alert, Box, CircularProgress } from "@mui/material";
+import { Alert, Box, CircularProgress, Stack } from "@mui/material";
 import AnalyticsHero from "../components/AnalyticsHero";
 import AnalyticsSection from "../components/AnalyticsSection";
 import AnalyticsSummaryCards from "../components/AnalyticsSummaryCards";
@@ -12,6 +12,8 @@ import { usePortfolioAnalytics } from "../hooks/usePortfolioAnalytics";
 import { useTopItemsAnalytics } from "../hooks/useTopItemsAnalytics";
 import { useItemTrendAnalytics } from "../hooks/useItemTrendAnalytics";
 import PortfolioComparisonChart from "../components/PortfolioComparisonChart";
+import InventoryMoversPanel from "../components/InventoryMoversPanel";
+import WishlistOpportunitiesPanel from "../../alerts/components/WishlistOpportunitiesPanel";
 
 const AnalyticsPage = () => {
   const [selectedItemId, setSelectedItemId] = useState("");
@@ -76,31 +78,24 @@ const AnalyticsPage = () => {
     <Box sx={{ width: "100%", maxWidth: "1400px", mx: "auto" }}>
       <AnalyticsHero />
 
-      <AnalyticsSection title="Summary">
+      <Stack spacing={3}>
         <AnalyticsSummaryCards data={summaryData} />
-      </AnalyticsSection>
-
-      <AnalyticsSection title="Portfolio overview">
         <PortfolioOverviewCards data={portfolioData} />
-      </AnalyticsSection>
-
-      <AnalyticsSection title="Portfolio comparison">
         <PortfolioComparisonChart data={portfolioData} />
-      </AnalyticsSection>
-
-      <AnalyticsSection title="Top items">
         <TopItemsPanel data={topItemsData} />
-      </AnalyticsSection>
-
-      <AnalyticsSection title="Item trend explorer">
-        <Box sx={{ mb: 2 }}>
-          <AnalyticsItemSelector
-            value={selectedItemId}
-            onChange={setSelectedItemId}
-            items={selectableItems}
-          />
-        </Box>
-
+        <InventoryMoversPanel />
+        <AnalyticsSection title="Wishlist opportunities">
+          <WishlistOpportunitiesPanel />
+        </AnalyticsSection>
+        <AnalyticsSection title="Item trend explorer">
+          <Box sx={{ mb: 2 }}>
+            <AnalyticsItemSelector
+              value={selectedItemId}
+              onChange={setSelectedItemId}
+              items={selectableItems}
+            />
+          </Box>
+        </AnalyticsSection>
         <ItemTrendPanel
           isLoading={trendQuery.isLoading}
           isError={trendQuery.isError}
@@ -110,7 +105,7 @@ const AnalyticsPage = () => {
           }
           data={trendData}
         />
-      </AnalyticsSection>
+      </Stack>
     </Box>
   );
 };
