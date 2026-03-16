@@ -14,10 +14,10 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 
-import { useCreatePriceHistory } from "../hooks/useCreatePriceHistory";
+import useCreatePriceHistory from "../hooks/useCreatePriceHistory";
 import { formatCurrency } from "../../../utils/formatCurrency";
 
-const AddPriceHistoryDialog = ({ open, onClose, item }) => {
+const AddPriceHistoryDialog = ({ open, onClose, item, onCreateSuccess }) => {
   const createMutation = useCreatePriceHistory();
 
   const [form, setForm] = useState({
@@ -83,6 +83,7 @@ const AddPriceHistoryDialog = ({ open, onClose, item }) => {
       });
 
       onClose?.();
+      onCreateSuccess?.();
     } catch (error) {
       console.error("Error creating price history entry:", error);
     }
