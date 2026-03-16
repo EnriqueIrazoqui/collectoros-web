@@ -17,8 +17,8 @@ import AddIcon from "@mui/icons-material/Add";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 
-import { usePriceHistory } from "../hooks/usePriceHistory";
-import { useDeletePriceHistory } from "../hooks/useDeletePriceHistory";
+import usePriceHistory from "../hooks/usePriceHistory";
+import useDeletePriceHistory from "../hooks/useDeletePriceHistory";
 import PriceHistoryTable from "./PriceHistoryTable";
 import AddPriceHistoryDialog from "./AddPriceHistoryDialog";
 import ConfirmDeletePriceHistoryDialog from "./ConfirmDeletePriceHistoryDialog";
@@ -195,7 +195,9 @@ const PriceHistoryDialog = ({ open, onClose, item }) => {
                   </Typography>
 
                   <Typography variant="h6" fontWeight={700}>
-                    {formatPriceHistoryCurrency(item?.currentEstimatedValue || 0)}
+                    {formatPriceHistoryCurrency(
+                      item?.currentEstimatedValue || 0,
+                    )}
                   </Typography>
 
                   {latestRecord ? (
@@ -291,6 +293,14 @@ const PriceHistoryDialog = ({ open, onClose, item }) => {
         open={openAddDialog}
         onClose={() => setOpenAddDialog(false)}
         item={item}
+        onCreateSuccess={() => {
+          setFeedback({
+            open: true,
+            severity: "success",
+            title: "Price history updated",
+            message: "Price record created successfully.",
+          });
+        }}
       />
 
       <ConfirmDeletePriceHistoryDialog
