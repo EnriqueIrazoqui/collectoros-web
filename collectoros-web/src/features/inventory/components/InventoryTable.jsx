@@ -12,13 +12,19 @@ import {
 import InventoryRowActions from "./InventoryRowActions";
 import { formatCurrency } from "../../../utils/formatCurrency";
 
-const formatDate = (value) => {
+function formatDate(value) {
   if (!value) return "-";
 
   return new Date(value).toLocaleDateString("en-US");
-};
+}
 
-const InventoryTable = ({ items = [], onViewItem, onEditItem, onDeleteItem }) => {
+const InventoryTable = ({
+  items = [],
+  onViewItem,
+  onEditItem,
+  onDeleteItem,
+  onOpenPriceHistory,
+}) => {
   return (
     <TableContainer component={Paper} sx={{ borderRadius: 4 }}>
       <Table>
@@ -89,6 +95,7 @@ const InventoryTable = ({ items = [], onViewItem, onEditItem, onDeleteItem }) =>
                 <TableCell align="right">
                   <InventoryRowActions
                     onView={() => onViewItem?.(item)}
+                    onHistory={() => onOpenPriceHistory?.(item)}
                     onEdit={() => onEditItem?.(item)}
                     onDelete={() => onDeleteItem?.(item)}
                   />
