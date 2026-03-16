@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Alert, Box, CircularProgress, Snackbar } from "@mui/material";
+import { Alert, Box, CircularProgress } from "@mui/material";
 import InventoryToolbar from "../components/InventoryToolbar";
 import InventoryTable from "../components/InventoryTable";
 import InventoryEmptyState from "../components/InventoryEmptyState";
@@ -18,6 +18,7 @@ import { useDeleteInventoryItem } from "../hooks/useDeleteInventoryItem";
 import InventoryDetailsDialog from "../components/InventoryDetailsDialog";
 import { useInventoryItem } from "../hooks/useInventoryItem";
 import InventoryFilteredEmptyState from "../components/InventoryEmptyState";
+import PriceHistoryDialog from "../../price-history/components/PriceHistoryDialog";
 
 const InventoryPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,6 +31,8 @@ const InventoryPage = () => {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("name-asc");
+  const [priceHistoryOpen, setPriceHistoryOpen] = useState(false);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
 
   const { data, isLoading, isError, error } = useInventoryList();
   const createInventoryMutation = useCreateInventoryItem();
@@ -38,7 +41,6 @@ const InventoryPage = () => {
   const inventoryItemQuery = useInventoryItem(viewingItemId, isViewDialogOpen);
 
   const inventoryItems = data?.data || [];
-
 
   const [feedback, setFeedback] = useState({
     open: false,
@@ -56,65 +58,75 @@ const InventoryPage = () => {
   }, [inventoryItems]);
 
   const filteredItems = useMemo(() => {
-  const normalizedSearch = searchTerm.trim().toLowerCase();
+    const normalizedSearch = searchTerm.trim().toLowerCase();
 
-  let result = [...inventoryItems];
+    let result = [...inventoryItems];
 
-  if (normalizedSearch) {
-    result = result.filter((item) => {
-      const name = item.name?.toLowerCase() || "";
-      const category = item.category?.toLowerCase() || "";
+    if (normalizedSearch) {
+      result = result.filter((item) => {
+        const name = item.name?.toLowerCase() || "";
+        const category = item.category?.toLowerCase() || "";
 
-      return (
-        name.includes(normalizedSearch) || category.includes(normalizedSearch)
-      );
-    });
-  }
-
-  if (selectedCategory !== "all") {
-    result = result.filter((item) => item.category === selectedCategory);
-  }
-
-  result.sort((a, b) => {
-    const gainA =
-      Number(a.currentEstimatedValue || 0) - Number(a.purchasePrice || 0);
-    const gainB =
-      Number(b.currentEstimatedValue || 0) - Number(b.purchasePrice || 0);
-
-    switch (sortBy) {
-      case "name-asc":
-        return (a.name || "").localeCompare(b.name || "");
-      case "name-desc":
-        return (b.name || "").localeCompare(a.name || "");
-      case "purchasePrice-desc":
-        return Number(b.purchasePrice || 0) - Number(a.purchasePrice || 0);
-      case "purchasePrice-asc":
-        return Number(a.purchasePrice || 0) - Number(b.purchasePrice || 0);
-      case "estimatedValue-desc":
         return (
-          Number(b.currentEstimatedValue || 0) -
-          Number(a.currentEstimatedValue || 0)
+          name.includes(normalizedSearch) || category.includes(normalizedSearch)
         );
-      case "estimatedValue-asc":
-        return (
-          Number(a.currentEstimatedValue || 0) -
-          Number(b.currentEstimatedValue || 0)
-        );
-      case "gain-desc":
-        return gainB - gainA;
-      case "gain-asc":
-        return gainA - gainB;
-      case "purchaseDate-desc":
-        return new Date(b.purchaseDate) - new Date(a.purchaseDate);
-      case "purchaseDate-asc":
-        return new Date(a.purchaseDate) - new Date(b.purchaseDate);
-      default:
-        return 0;
+      });
     }
-  });
 
-  return result;
-}, [inventoryItems, searchTerm, selectedCategory, sortBy]);
+    if (selectedCategory !== "all") {
+      result = result.filter((item) => item.category === selectedCategory);
+    }
+
+    result.sort((a, b) => {
+      const gainA =
+        Number(a.currentEstimatedValue || 0) - Number(a.purchasePrice || 0);
+      const gainB =
+        Number(b.currentEstimatedValue || 0) - Number(b.purchasePrice || 0);
+
+      switch (sortBy) {
+        case "name-asc":
+          return (a.name || "").localeCompare(b.name || "");
+        case "name-desc":
+          return (b.name || "").localeCompare(a.name || "");
+        case "purchasePrice-desc":
+          return Number(b.purchasePrice || 0) - Number(a.purchasePrice || 0);
+        case "purchasePrice-asc":
+          return Number(a.purchasePrice || 0) - Number(b.purchasePrice || 0);
+        case "estimatedValue-desc":
+          return (
+            Number(b.currentEstimatedValue || 0) -
+            Number(a.currentEstimatedValue || 0)
+          );
+        case "estimatedValue-asc":
+          return (
+            Number(a.currentEstimatedValue || 0) -
+            Number(b.currentEstimatedValue || 0)
+          );
+        case "gain-desc":
+          return gainB - gainA;
+        case "gain-asc":
+          return gainA - gainB;
+        case "purchaseDate-desc":
+          return new Date(b.purchaseDate) - new Date(a.purchaseDate);
+        case "purchaseDate-asc":
+          return new Date(a.purchaseDate) - new Date(b.purchaseDate);
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [inventoryItems, searchTerm, selectedCategory, sortBy]);
+
+  const handleOpenPriceHistory = (item) => {
+    setSelectedHistoryItem(item);
+    setPriceHistoryOpen(true);
+  };
+
+  const handleClosePriceHistory = () => {
+    setPriceHistoryOpen(false);
+    setSelectedHistoryItem(null);
+  };
 
   const handleCloseFeedback = () => {
     setFeedback((prev) => ({
@@ -138,7 +150,6 @@ const InventoryPage = () => {
       await createInventoryMutation.mutateAsync(formValues);
 
       setIsCreateDialogOpen(false);
-
       setFeedback(buildFeedback(feedbackMessages.createSuccess));
     } catch (mutationError) {
       console.error("Create inventory item error:", mutationError);
@@ -153,10 +164,6 @@ const InventoryPage = () => {
   };
 
   const handleViewItem = (item) => {
-    handleOpenViewDialog(item);
-  };
-
-  const handleOpenViewDialog = (item) => {
     setViewingItemId(item.id);
     setIsViewDialogOpen(true);
   };
@@ -166,7 +173,7 @@ const InventoryPage = () => {
     setViewingItemId(null);
   };
 
-  const handleOpenEditDialog = (item) => {
+  const handleEditItem = (item) => {
     setEditingItem(item);
     setIsEditDialogOpen(true);
   };
@@ -206,15 +213,7 @@ const InventoryPage = () => {
     }
   };
 
-  const handleEditItem = (item) => {
-    handleOpenEditDialog(item);
-  };
-
   const handleDeleteItem = (item) => {
-    handleOpenDeleteDialog(item);
-  };
-
-  const handleOpenDeleteDialog = (item) => {
     setDeletingItem(item);
     setIsDeleteDialogOpen(true);
   };
@@ -291,6 +290,7 @@ const InventoryPage = () => {
           onViewItem={handleViewItem}
           onEditItem={handleEditItem}
           onDeleteItem={handleDeleteItem}
+          onOpenPriceHistory={handleOpenPriceHistory}
         />
       )}
 
@@ -330,20 +330,26 @@ const InventoryPage = () => {
         onClose={handleCloseViewDialog}
       />
 
-      <AppFeedbackSnackbar
-        open={feedback.open}
-        severity={feedback.severity}
-        title={feedback.title}
-        message={feedback.message}
-        onClose={handleCloseFeedback}
-      />
-
       <DeleteInventoryDialog
         open={isDeleteDialogOpen}
         item={deletingItem}
         isDeleting={deleteInventoryMutation.isPending}
         onClose={handleCloseDeleteDialog}
         onConfirm={handleConfirmDeleteItem}
+      />
+
+      <PriceHistoryDialog
+        open={priceHistoryOpen}
+        onClose={handleClosePriceHistory}
+        item={selectedHistoryItem}
+      />
+
+      <AppFeedbackSnackbar
+        open={feedback.open}
+        severity={feedback.severity}
+        title={feedback.title}
+        message={feedback.message}
+        onClose={handleCloseFeedback}
       />
     </Box>
   );
