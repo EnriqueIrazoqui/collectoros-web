@@ -52,10 +52,9 @@ function sortPriceHistoryDesc(history = []) {
 function transformPriceHistoryForChart(history = []) {
   return sortPriceHistoryAsc(history).map((entry) => ({
     id: entry.id,
-    date: new Date(entry.createdAt).toLocaleDateString("es-MX", {
-      day: "2-digit",
+    date: new Date(entry.createdAt).toLocaleDateString("en-US", {
       month: "short",
-      year: "2-digit",
+      day: "2-digit",
     }),
     fullDate: entry.createdAt,
     price: Number(entry.price || 0),
@@ -63,10 +62,61 @@ function transformPriceHistoryForChart(history = []) {
   }));
 }
 
+function getHighestPriceHistoryRecord(history = []) {
+  if (!Array.isArray(history) || history.length === 0) return null;
+
+  return history.reduce((highest, current) => {
+    if (!highest) return current;
+    return Number(current.price) > Number(highest.price) ? current : highest;
+  }, null);
+}
+
+function getLowestPriceHistoryRecord(history = []) {
+  if (!Array.isArray(history) || history.length === 0) return null;
+
+  return history.reduce((lowest, current) => {
+    if (!lowest) return current;
+    return Number(current.price) < Number(lowest.price) ? current : lowest;
+  }, null);
+}
+
+function getPriceHistoryChangeFromFirst(history = []) {
+  const sortedHistory = sortPriceHistoryAsc(history);
+
+  if (sortedHistory.length < 2) {
+    return {
+      firstRecord: sortedHistory[0] || null,
+      lastRecord: sortedHistory[0] || null,
+      change: 0,
+      changePercent: 0,
+    };
+  }
+
+  const firstRecord = sortedHistory[0];
+  const lastRecord = sortedHistory[sortedHistory.length - 1];
+
+  const firstPrice = Number(firstRecord.price || 0);
+  const lastPrice = Number(lastRecord.price || 0);
+  const change = lastPrice - firstPrice;
+
+  const changePercent =
+    firstPrice > 0 ? (change / firstPrice) * 100 : 0;
+
+  return {
+    firstRecord,
+    lastRecord,
+    change,
+    changePercent,
+  };
+}
+
 export {
   formatPriceHistoryCurrency,
   formatPriceHistoryDate,
   getLatestPriceHistoryRecord,
+  getHighestPriceHistoryRecord,
+  getLowestPriceHistoryRecord,
+  getPriceHistoryChangeFromFirst,
   sortPriceHistoryAsc,
   sortPriceHistoryDesc,
   transformPriceHistoryForChart,

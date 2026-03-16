@@ -23,6 +23,8 @@ import PriceHistoryTable from "./PriceHistoryTable";
 import AddPriceHistoryDialog from "./AddPriceHistoryDialog";
 import ConfirmDeletePriceHistoryDialog from "./ConfirmDeletePriceHistoryDialog";
 import AppFeedbackSnackbar from "../../../components/feedback/AppFeedbackSnackbar";
+import PriceHistoryChart from "./PriceHistoryChart";
+import PriceHistoryStats from "./PriceHistoryStats";
 import {
   formatPriceHistoryCurrency,
   getLatestPriceHistoryRecord,
@@ -210,6 +212,9 @@ const PriceHistoryDialog = ({ open, onClose, item }) => {
               </Stack>
             </Box>
 
+            <PriceHistoryStats history={historyRows} />
+            <PriceHistoryChart history={historyRows} />
+
             <Stack
               direction={{ xs: "column", sm: "row" }}
               justifyContent="space-between"
@@ -237,54 +242,7 @@ const PriceHistoryDialog = ({ open, onClose, item }) => {
 
             <Divider />
 
-            {isLoading ? (
-              <Box
-                sx={{
-                  minHeight: 220,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Stack alignItems="center" spacing={2}>
-                  <CircularProgress />
-                  <Typography variant="body2" color="text.secondary">
-                    Loading price history...
-                  </Typography>
-                </Stack>
-              </Box>
-            ) : isError ? (
-              <Box
-                sx={{
-                  minHeight: 160,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border: "1px dashed",
-                  borderColor: "divider",
-                  borderRadius: 3,
-                  p: 3,
-                }}
-              >
-                <Stack spacing={1} alignItems="center">
-                  <TrendingUpOutlinedIcon color="error" />
-                  <Typography variant="subtitle2" color="error">
-                    Error loading price history
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {error?.response?.data?.message ||
-                      error?.message ||
-                      "Something went wrong."}
-                  </Typography>
-                </Stack>
-              </Box>
-            ) : (
-              <PriceHistoryTable
-                rows={historyRows}
-                onDelete={handleDeleteClick}
-                deletingId={deleteMutation.variables?.priceHistoryId}
-              />
-            )}
+            {/* tabla */}
           </Stack>
         </DialogContent>
       </Dialog>
