@@ -14,6 +14,10 @@ import { useItemTrendAnalytics } from "../hooks/useItemTrendAnalytics";
 import PortfolioComparisonChart from "../components/PortfolioComparisonChart";
 import InventoryMoversPanel from "../components/InventoryMoversPanel";
 import WishlistOpportunitiesPanel from "../../alerts/components/WishlistOpportunitiesPanel";
+import PortfolioAllocationChart from "../components/PortfolioAllocationChart";
+import CollectionGrowthChart from "../components/CollectionGrowthChart";
+import BestWorstTradePanel from "../components/BestWorstTradePanel";
+import AutomatedInsightsPanel from "../components/AutomatedInsightsPanel";
 
 const AnalyticsPage = () => {
   const [selectedItemId, setSelectedItemId] = useState("");
@@ -79,9 +83,13 @@ const AnalyticsPage = () => {
       <AnalyticsHero />
 
       <Stack spacing={3}>
+         <AutomatedInsightsPanel />
         <AnalyticsSummaryCards data={summaryData} />
         <PortfolioOverviewCards data={portfolioData} />
         <PortfolioComparisonChart data={portfolioData} />
+        <PortfolioAllocationChart />
+        <CollectionGrowthChart />
+        <BestWorstTradePanel />
         <TopItemsPanel data={topItemsData} />
         <InventoryMoversPanel />
         <AnalyticsSection title="Wishlist opportunities">

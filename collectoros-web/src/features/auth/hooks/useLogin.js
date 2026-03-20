@@ -1,16 +1,26 @@
 import { useMutation } from "@tanstack/react-query";
 import { loginRequest } from "../api/authApi";
-import { setAccessToken } from "../utils/authStorage";
+import {
+  setAccessToken,
+  setRefreshToken,
+} from "../utils/authStorage";
 
-export const useLogin = () => {
+function useLogin() {
   return useMutation({
     mutationFn: loginRequest,
     onSuccess: (response) => {
-      const token = response?.data?.accessToken;
+      const accessToken = response?.data?.accessToken;
+      const refreshToken = response?.data?.refreshToken;
 
-      if (token) {
-        setAccessToken(token);
+      if (accessToken) {
+        setAccessToken(accessToken);
+      }
+
+      if (refreshToken) {
+        setRefreshToken(refreshToken);
       }
     },
   });
-};
+}
+
+export { useLogin };

@@ -1,19 +1,11 @@
-import { useEffect } from "react";
 import { Box, Paper, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "../components/LoginForm";
 import { useLogin } from "../hooks/useLogin";
-import { hasAccessToken } from "../utils/authStorage";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const loginMutation = useLogin();
-
-  // useEffect(() => {
-  //   if (hasAccessToken()) {
-  //     navigate("/", { replace: true });
-  //   }
-  // }, [navigate]);
 
 const handleLogin = async (formValues) => {
   try {
@@ -24,9 +16,10 @@ const handleLogin = async (formValues) => {
   }
 };
 
-  const errorMessage =
-    loginMutation.error?.response?.data?.message ||
-    "No fue posible iniciar sesión.";
+ const errorMessage = loginMutation.isError
+  ? loginMutation.error?.response?.data?.message ||
+    "Log in failed."
+  : "";
 
   return (
     <Box
@@ -50,7 +43,7 @@ const handleLogin = async (formValues) => {
         </Typography>
 
         <Typography variant="body1" color="text.secondary" mb={3}>
-          Inicia sesión para continuar
+          log in to continue
         </Typography>
 
         <LoginForm

@@ -6,7 +6,7 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 export const navigationItems = [
   {
     label: "Dashboard",
-    path: "/",
+    path: "/dashboard",
     icon: DashboardIcon,
   },
   {

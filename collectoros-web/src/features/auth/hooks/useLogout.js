@@ -1,13 +1,17 @@
-import { useNavigate } from "react-router-dom";
-import { removeAccessToken } from "../utils/authStorage";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { logoutRequest } from "../api/authApi";
+import { clearAuthTokens } from "../utils/authStorage";
 
-export const useLogout = () => {
-  const navigate = useNavigate();
+function useLogout() {
+  const queryClient = useQueryClient();
 
-  const logout = () => {
-    removeAccessToken();
-    navigate("/login", { replace: true });
-  };
+  return useMutation({
+    mutationFn: logoutRequest,
+    onSettled: () => {
+      clearAuthTokens();
+      queryClient.clear();
+    },
+  });
+}
 
-  return { logout };
-};
+export { useLogout };

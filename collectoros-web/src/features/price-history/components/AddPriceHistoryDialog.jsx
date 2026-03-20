@@ -92,7 +92,15 @@ const AddPriceHistoryDialog = ({ open, onClose, item, onCreateSuccess }) => {
   return (
     <Dialog
       open={open}
-      onClose={createMutation.isPending ? undefined : onClose}
+      onClose={(event, reason) => {
+        if (createMutation.isPending) return;
+
+        if (reason === "backdropClick" || reason === "escapeKeyDown") {
+          return;
+        }
+
+        onClose();
+      }}
       fullWidth
       maxWidth="sm"
       PaperProps={{
