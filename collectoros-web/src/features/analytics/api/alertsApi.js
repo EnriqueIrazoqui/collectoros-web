@@ -5,4 +5,9 @@ async function getInventoryMovers() {
   return data;
 }
 
-export { getInventoryMovers };
+async function getWishlistOpportunities() {
+  const response = await apiClient.get("/alerts/wishlist-opportunities");
+  return response.data;
+}
+
+export { getInventoryMovers, getWishlistOpportunities };

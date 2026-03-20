@@ -10,11 +10,13 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLogout } from "../../features/auth/hooks/useLogout";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 
 const Topbar = ({ onMenuClick }) => {
-  const { logout } = useLogout();
+  const navigate = useNavigate();
+  const logoutMutation = useLogout();
   const { user } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -26,9 +28,16 @@ const Topbar = ({ onMenuClick }) => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleCloseMenu();
-    logout();
+
+    try {
+      await logoutMutation.mutateAsync();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+
+    navigate("/login", { replace: true });
   };
 
   const userLabel = user?.displayName || user?.email || "Usuario";
@@ -73,7 +82,12 @@ const Topbar = ({ onMenuClick }) => {
             open={Boolean(anchorEl)}
             onClose={handleCloseMenu}
           >
-            <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
+            <MenuItem
+              onClick={handleLogout}
+              disabled={logoutMutation.isPending}
+            >
+              {logoutMutation.isPending ? "Cerrando..." : "Cerrar sesión"}
+            </MenuItem>
           </Menu>
         </Box>
       </Toolbar>

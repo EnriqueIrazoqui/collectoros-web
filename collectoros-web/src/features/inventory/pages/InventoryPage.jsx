@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { Alert, Box, CircularProgress } from "@mui/material";
+import { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Alert, Box, CircularProgress, Button } from "@mui/material";
 import InventoryToolbar from "../components/InventoryToolbar";
 import InventoryTable from "../components/InventoryTable";
 import InventoryEmptyState from "../components/InventoryEmptyState";
@@ -19,6 +20,9 @@ import InventoryDetailsDialog from "../components/InventoryDetailsDialog";
 import { useInventoryItem } from "../hooks/useInventoryItem";
 import InventoryFilteredEmptyState from "../components/InventoryEmptyState";
 import PriceHistoryDialog from "../../price-history/components/PriceHistoryDialog";
+import { useConnectMicrosoft } from "../../auth/hooks/useConnectMicrosoft";
+import { useAuth } from "../../auth/hooks/useAuth";
+import { useInventoryItemImages } from "../hooks/useInventoryItemImages";
 
 const InventoryPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,12 +37,22 @@ const InventoryPage = () => {
   const [sortBy, setSortBy] = useState("name-asc");
   const [priceHistoryOpen, setPriceHistoryOpen] = useState(false);
   const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { data, isLoading, isError, error } = useInventoryList();
   const createInventoryMutation = useCreateInventoryItem();
   const updateInventoryMutation = useUpdateInventoryItem();
   const deleteInventoryMutation = useDeleteInventoryItem();
+  const { data: editingImagesResponse, isLoading: isLoadingEditingImages } =
+    useInventoryItemImages(
+      editingItem?.id,
+      isEditDialogOpen && !!editingItem?.id,
+    );
+  const editingItemImages = editingImagesResponse?.data || [];
   const inventoryItemQuery = useInventoryItem(viewingItemId, isViewDialogOpen);
+  const connectMicrosoftMutation = useConnectMicrosoft();
+  const { user } = useAuth();
+  const isMicrosoftConnected = !!user?.microsoftAccountId;
 
   const inventoryItems = data?.data || [];
 
@@ -145,9 +159,9 @@ const InventoryPage = () => {
     }
   };
 
-  const handleCreateItem = async (formValues) => {
+  const handleCreateItem = async (payload) => {
     try {
-      await createInventoryMutation.mutateAsync(formValues);
+      await createInventoryMutation.mutateAsync(payload);
 
       setIsCreateDialogOpen(false);
       setFeedback(buildFeedback(feedbackMessages.createSuccess));
@@ -185,33 +199,38 @@ const InventoryPage = () => {
     }
   };
 
-  const handleEditItemSubmit = async (payload) => {
-    if (!payload || Object.keys(payload).length === 0) {
-      setFeedback(buildFeedback(feedbackMessages.noChanges));
-      return;
-    }
+const handleEditItemSubmit = async (payload) => {
+  const hasChanges =
+    payload instanceof FormData
+      ? payload.get("hasChanges") === "true"
+      : payload && Object.keys(payload).length > 0;
 
-    try {
-      await updateInventoryMutation.mutateAsync({
-        id: editingItem.id,
-        payload,
-      });
+  if (!hasChanges) {
+    setFeedback(buildFeedback(feedbackMessages.noChanges));
+    return;
+  }
 
-      setIsEditDialogOpen(false);
-      setEditingItem(null);
+  try {
+    await updateInventoryMutation.mutateAsync({
+      id: editingItem.id,
+      payload,
+    });
 
-      setFeedback(buildFeedback(feedbackMessages.updateSuccess));
-    } catch (mutationError) {
-      console.error("Update inventory item error:", mutationError);
+    setIsEditDialogOpen(false);
+    setEditingItem(null);
 
-      const backendMessage =
-        mutationError?.response?.data?.message || mutationError?.message;
+    setFeedback(buildFeedback(feedbackMessages.updateSuccess));
+  } catch (mutationError) {
+    console.error("Update inventory item error:", mutationError);
 
-      setFeedback(
-        buildErrorFeedback(feedbackMessages.updateError, backendMessage),
-      );
-    }
-  };
+    const backendMessage =
+      mutationError?.response?.data?.message || mutationError?.message;
+
+    setFeedback(
+      buildErrorFeedback(feedbackMessages.updateError, backendMessage),
+    );
+  }
+};
 
   const handleDeleteItem = (item) => {
     setDeletingItem(item);
@@ -247,6 +266,48 @@ const InventoryPage = () => {
     }
   };
 
+  const handleConnectMicrosoft = async () => {
+    try {
+      const response = await connectMicrosoftMutation.mutateAsync();
+      const authUrl = response?.data?.authUrl;
+
+      if (!authUrl) {
+        throw new Error(
+          "No se pudo obtener la URL de autorización de Microsoft.",
+        );
+      }
+
+      window.location.href = authUrl;
+    } catch (error) {
+      console.error("Connect Microsoft error:", error);
+
+      const backendMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Could not connect Microsoft.";
+
+      setFeedback(
+        buildErrorFeedback("Microsoft connection error", backendMessage),
+      );
+    }
+  };
+
+  useEffect(() => {
+    const isMicrosoftConnected = searchParams.get("microsoft_connected");
+
+    if (isMicrosoftConnected === "1") {
+      setFeedback(
+        buildFeedback({
+          title: "Microsoft connected",
+          message: "Your Microsoft account was connected successfully.",
+        }),
+      );
+
+      searchParams.delete("microsoft_connected");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" py={6}>
@@ -269,6 +330,15 @@ const InventoryPage = () => {
 
   return (
     <Box>
+      <Box mb={2}>
+        <Button
+          variant={isMicrosoftConnected ? "outlined" : "contained"}
+          color={isMicrosoftConnected ? "success" : "primary"}
+          onClick={!isMicrosoftConnected ? handleConnectMicrosoft : undefined}
+        >
+          {isMicrosoftConnected ? "Microsoft Connected" : "Connect Microsoft"}
+        </Button>
+      </Box>
       <InventoryToolbar
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -307,6 +377,7 @@ const InventoryPage = () => {
         open={isEditDialogOpen}
         mode="edit"
         initialValues={editingItem}
+        existingImages={editingItemImages}
         isSubmitting={updateInventoryMutation.isPending}
         errorMessage={
           updateInventoryMutation.isError

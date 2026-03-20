@@ -1,21 +1,46 @@
 import apiClient from "../../../services/apiClient";
 
-export const getAnalyticsSummaryRequest = async () => {
+async function getAnalyticsSummaryRequest() {
   const { data } = await apiClient.get("/analytics/summary");
   return data;
-};
+}
 
-export const getPortfolioAnalyticsRequest = async () => {
+async function getPortfolioAnalyticsRequest() {
   const { data } = await apiClient.get("/analytics/portfolio");
   return data;
-};
+}
 
-export const getTopItemsAnalyticsRequest = async () => {
+async function getTopItemsAnalyticsRequest() {
   const { data } = await apiClient.get("/analytics/top-items");
   return data;
-};
+}
 
-export const getItemTrendAnalyticsRequest = async (itemId) => {
+async function getItemTrendAnalyticsRequest(itemId) {
   const { data } = await apiClient.get(`/analytics/item-trend/${itemId}`);
   return data;
+}
+
+async function getPortfolioAllocation() {
+  const { data } = await apiClient.get("/analytics/allocation");
+  return data;
+}
+
+async function getCollectionGrowth() {
+  const { data } = await apiClient.get("/analytics/collection-growth");
+  return data;
+}
+
+async function getTradePerformance() {
+  const { data } = await apiClient.get("/analytics/trade-performance");
+  return data;
+}
+
+export {
+  getPortfolioAllocation,
+  getItemTrendAnalyticsRequest,
+  getTopItemsAnalyticsRequest,
+  getPortfolioAnalyticsRequest,
+  getAnalyticsSummaryRequest,
+  getCollectionGrowth,
+  getTradePerformance,
 };

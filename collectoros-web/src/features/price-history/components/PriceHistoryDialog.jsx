@@ -118,7 +118,13 @@ const PriceHistoryDialog = ({ open, onClose, item }) => {
     <>
       <Dialog
         open={open}
-        onClose={handleClose}
+        onClose={(event, reason) => {
+          if (reason === "backdropClick" || reason === "escapeKeyDown") {
+            return;
+          }
+
+          handleClose();
+        }}
         fullWidth
         maxWidth="md"
         PaperProps={{
@@ -242,7 +248,11 @@ const PriceHistoryDialog = ({ open, onClose, item }) => {
 
             <Divider />
 
-            {/* tabla */}
+            <PriceHistoryTable
+              rows={historyRows}
+              onDelete={handleDeleteClick}
+              deletingId={deleteMutation.variables?.priceHistoryId}
+            />
           </Stack>
         </DialogContent>
       </Dialog>

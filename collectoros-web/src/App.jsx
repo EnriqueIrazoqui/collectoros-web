@@ -1,7 +1,59 @@
-import AppRouter from "./app/router/AppRouter";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import SessionManager from "../src/features/auth/components/SessionManager";
+import ProtectedRoute from "../src/features/auth/components/ProtectedRoute";
+import { useAuthToken } from "../src/features/auth/hooks/useAuthToken";
 
-function App() {
-  return <AppRouter />;
+import LoginPage from "../src/features/auth/pages/LoginPage";
+import DashboardPage from "../src/features/dashboard/pages/DashboardPage";
+import InventoryPage from "../src/features/inventory/pages/InventoryPage";
+import WishlistPage from "../src/features/wishlist/pages/WishlistPage";
+import AnalyticsPage from "../src/features/analytics/pages/AnalyticsPage";
+
+import AppLayout from "../src/components/layout/AppLayout";
+
+function AppRouter() {
+  const tokenExists = useAuthToken();
+
+  return (
+    <BrowserRouter>
+      {tokenExists ? <SessionManager /> : null}
+
+      <Routes>
+        <Route
+          path="/"
+          element={
+            tokenExists ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/login"
+          element={
+            tokenExists ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <LoginPage />
+            )
+          }
+        />
+
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/wishlist" element={<WishlistPage />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
+          </Route>
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App;
+export default AppRouter;

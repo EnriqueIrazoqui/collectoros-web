@@ -1,8 +1,8 @@
-import { hasAccessToken } from "../utils/authStorage";
 import { useCurrentUser } from "./useCurrentUser";
+import { useAuthToken } from "./useAuthToken";
 
 export const useAuth = () => {
-  const tokenExists = hasAccessToken();
+  const tokenExists = useAuthToken();
   const currentUserQuery = useCurrentUser();
 
   const user = currentUserQuery.data?.data || null;

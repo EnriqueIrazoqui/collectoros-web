@@ -17,7 +17,15 @@ const ConfirmDeletePriceHistoryDialog = ({
   return (
     <Dialog
       open={open}
-      onClose={loading ? undefined : onClose}
+      onClose={(event, reason) => {
+        if (loading) return;
+
+        if (reason === "backdropClick" || reason === "escapeKeyDown") {
+          return;
+        }
+
+        onClose();
+      }}
       fullWidth
       maxWidth="xs"
       PaperProps={{
