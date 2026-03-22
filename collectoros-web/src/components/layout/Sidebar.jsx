@@ -10,10 +10,21 @@ import {
 } from "@mui/material";
 import { NavLink } from "react-router-dom";
 import { navigationItems } from "./navigationItems";
+import { useAuth } from "../../features/auth/hooks/useAuth";
 
 const drawerWidth = 260;
 
 const SidebarContent = ({ onNavigate }) => {
+  const { user } = useAuth();
+
+  const visibleNavigationItems = navigationItems.filter((item) => {
+    if (!item.adminOnly) {
+      return true;
+    }
+
+    return user?.role === "admin";
+  });
+
   return (
     <Box>
       <Toolbar>
@@ -23,7 +34,7 @@ const SidebarContent = ({ onNavigate }) => {
       </Toolbar>
 
       <List>
-        {navigationItems.map((item) => {
+        {visibleNavigationItems.map((item) => {
           const Icon = item.icon;
 
           return (
