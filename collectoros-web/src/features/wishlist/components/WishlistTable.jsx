@@ -25,10 +25,30 @@ const getPriorityColor = (priority) => {
 
 const WishlistTable = ({ items = [], onViewItem, onEditItem, onDeleteItem }) => {
   return (
-    <TableContainer component={Paper} sx={{ borderRadius: 4 }}>
+    <TableContainer
+      component={Paper}
+      sx={{
+        borderRadius: "24px",
+        overflow: "hidden",
+        backgroundColor: "background.paper",
+        border: "1px solid",
+        borderColor: "divider",
+        boxShadow: "none",
+      }}
+    >
       <Table>
         <TableHead>
-          <TableRow>
+          <TableRow
+            sx={{
+              "& th": {
+                borderBottom: "1px solid",
+                borderColor: "divider",
+                py: 2.5,
+                fontWeight: 500,
+                color: "text.primary",
+              },
+            }}
+          >
             <TableCell>Name</TableCell>
             <TableCell>Category</TableCell>
             <TableCell>Priority</TableCell>
@@ -40,16 +60,28 @@ const WishlistTable = ({ items = [], onViewItem, onEditItem, onDeleteItem }) => 
         </TableHead>
 
         <TableBody>
-          {items.map((item) => {
+          {items.map((item, index) => {
             const targetPrice = Number(item.targetPrice || 0);
             const observedPrice = Number(item.currentObservedPrice || 0);
             const delta = observedPrice - targetPrice;
+            const isLastRow = index === items.length - 1;
 
             return (
-              <TableRow key={item.id} hover>
+              <TableRow
+                key={item.id}
+                hover
+                sx={{
+                  "& td": {
+                    py: 2.75,
+                    borderBottom: isLastRow ? "none" : "1px solid",
+                    borderColor: "divider",
+                    verticalAlign: "middle",
+                  },
+                }}
+              >
                 <TableCell>
                   <Box>
-                    <Typography fontWeight={600}>{item.name}</Typography>
+                    <Typography fontWeight={700}>{item.name}</Typography>
 
                     {item.description ? (
                       <Typography variant="body2" color="text.secondary">
@@ -82,7 +114,7 @@ const WishlistTable = ({ items = [], onViewItem, onEditItem, onDeleteItem }) => 
                   align="right"
                   sx={{
                     color: delta <= 0 ? "success.main" : "warning.main",
-                    fontWeight: 600,
+                    fontWeight: 700,
                   }}
                 >
                   {delta > 0 ? "+" : ""}

@@ -1,6 +1,12 @@
 import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Alert, Box, CircularProgress, Button } from "@mui/material";
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Button,
+  Typography,
+} from "@mui/material";
 import InventoryToolbar from "../components/InventoryToolbar";
 import InventoryTable from "../components/InventoryTable";
 import InventoryEmptyState from "../components/InventoryEmptyState";
@@ -52,7 +58,8 @@ const InventoryPage = () => {
   const inventoryItemQuery = useInventoryItem(viewingItemId, isViewDialogOpen);
   const connectMicrosoftMutation = useConnectMicrosoft();
   const { user } = useAuth();
-  const isMicrosoftConnected = !!user?.microsoftAccountId;
+  const isMicrosoftConnected =
+    !!user?.microsoftAccountId || !!user?.microsoftConnected;
 
   const inventoryItems = data?.data || [];
 
@@ -199,38 +206,38 @@ const InventoryPage = () => {
     }
   };
 
-const handleEditItemSubmit = async (payload) => {
-  const hasChanges =
-    payload instanceof FormData
-      ? payload.get("hasChanges") === "true"
-      : payload && Object.keys(payload).length > 0;
+  const handleEditItemSubmit = async (payload) => {
+    const hasChanges =
+      payload instanceof FormData
+        ? payload.get("hasChanges") === "true"
+        : payload && Object.keys(payload).length > 0;
 
-  if (!hasChanges) {
-    setFeedback(buildFeedback(feedbackMessages.noChanges));
-    return;
-  }
+    if (!hasChanges) {
+      setFeedback(buildFeedback(feedbackMessages.noChanges));
+      return;
+    }
 
-  try {
-    await updateInventoryMutation.mutateAsync({
-      id: editingItem.id,
-      payload,
-    });
+    try {
+      await updateInventoryMutation.mutateAsync({
+        id: editingItem.id,
+        payload,
+      });
 
-    setIsEditDialogOpen(false);
-    setEditingItem(null);
+      setIsEditDialogOpen(false);
+      setEditingItem(null);
 
-    setFeedback(buildFeedback(feedbackMessages.updateSuccess));
-  } catch (mutationError) {
-    console.error("Update inventory item error:", mutationError);
+      setFeedback(buildFeedback(feedbackMessages.updateSuccess));
+    } catch (mutationError) {
+      console.error("Update inventory item error:", mutationError);
 
-    const backendMessage =
-      mutationError?.response?.data?.message || mutationError?.message;
+      const backendMessage =
+        mutationError?.response?.data?.message || mutationError?.message;
 
-    setFeedback(
-      buildErrorFeedback(feedbackMessages.updateError, backendMessage),
-    );
-  }
-};
+      setFeedback(
+        buildErrorFeedback(feedbackMessages.updateError, backendMessage),
+      );
+    }
+  };
 
   const handleDeleteItem = (item) => {
     setDeletingItem(item);
@@ -330,14 +337,48 @@ const handleEditItemSubmit = async (payload) => {
 
   return (
     <Box>
-      <Box mb={2}>
-        <Button
-          variant={isMicrosoftConnected ? "outlined" : "contained"}
-          color={isMicrosoftConnected ? "success" : "primary"}
-          onClick={!isMicrosoftConnected ? handleConnectMicrosoft : undefined}
-        >
-          {isMicrosoftConnected ? "Microsoft Connected" : "Connect Microsoft"}
-        </Button>
+      <Box mb={3}>
+        {!isMicrosoftConnected ? (
+          <Alert
+            severity="info"
+            sx={{
+              borderRadius: 3,
+              alignItems: "center",
+            }}
+            action={
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleConnectMicrosoft}
+              >
+                Connect
+              </Button>
+            }
+          >
+            <Stack spacing={0.5}>
+              <Typography fontWeight={600}>
+                Connect Microsoft to enable image uploads
+              </Typography>
+
+              <Typography variant="body2">
+                Images are stored in your Microsoft account. Connect it to
+                upload and manage item photos.
+              </Typography>
+            </Stack>
+          </Alert>
+        ) : (
+          <Alert
+            severity="success"
+            sx={{
+              borderRadius: 3,
+              alignItems: "center",
+            }}
+          >
+            <Typography fontWeight={600}>
+              Microsoft connected — image uploads are enabled
+            </Typography>
+          </Alert>
+        )}
       </Box>
       <InventoryToolbar
         searchTerm={searchTerm}
@@ -369,6 +410,7 @@ const handleEditItemSubmit = async (payload) => {
         mode="create"
         isSubmitting={createInventoryMutation.isPending}
         errorMessage={createInventoryMutation.isError ? createErrorMessage : ""}
+        isMicrosoftConnected={isMicrosoftConnected}
         onClose={handleCloseCreateDialog}
         onSubmit={handleCreateItem}
       />
@@ -385,6 +427,7 @@ const handleEditItemSubmit = async (payload) => {
               "Could not update inventory item."
             : ""
         }
+        isMicrosoftConnected={isMicrosoftConnected}
         onClose={handleCloseEditDialog}
         onSubmit={handleEditItemSubmit}
       />

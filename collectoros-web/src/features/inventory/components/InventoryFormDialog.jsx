@@ -53,6 +53,7 @@ const InventoryFormDialog = ({
   existingImages = [],
   isSubmitting = false,
   errorMessage = "",
+  isMicrosoftConnected = false,
   onClose,
   onSubmit,
 }) => {
@@ -101,6 +102,14 @@ const InventoryFormDialog = ({
   };
 
   const handleImagesChange = (event) => {
+    if (!isMicrosoftConnected) {
+      setLocalImageError(
+        "Connect Microsoft first to upload images for inventory items.",
+      );
+      event.target.value = "";
+      return;
+    }
+
     const files = Array.from(event.target.files || []);
     const currentCount =
       mode === "edit"
@@ -151,7 +160,9 @@ const InventoryFormDialog = ({
 
     const nextValues = {
       description: formValues.description.trim(),
-      currentEstimatedValue: String(Number(formValues.currentEstimatedValue || 0)),
+      currentEstimatedValue: String(
+        Number(formValues.currentEstimatedValue || 0),
+      ),
       condition: formValues.condition.trim(),
     };
 
@@ -322,16 +333,29 @@ const InventoryFormDialog = ({
                         Images
                       </Typography>
 
-                      <Button variant="outlined" component="label">
-                        Select up to 5 images
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        disabled={!isMicrosoftConnected}
+                      >
+                        {isMicrosoftConnected
+                          ? "Select up to 5 images"
+                          : "Connect Microsoft to upload images"}
                         <input
                           hidden
                           type="file"
                           accept="image/png,image/jpeg,image/webp"
                           multiple
                           onChange={handleImagesChange}
+                          disabled={!isMicrosoftConnected}
                         />
                       </Button>
+
+                      <Typography variant="body2" color="text.secondary">
+                        {isMicrosoftConnected
+                          ? "You can upload up to 5 images for this item."
+                          : "Image uploads are disabled until you connect your Microsoft account."}
+                      </Typography>
 
                       {imagePreviews.length > 0 && (
                         <Grid container spacing={2}>
@@ -491,19 +515,28 @@ const InventoryFormDialog = ({
                         Add new images
                       </Typography>
 
-                      <Button variant="outlined" component="label">
-                        Select up to 5 images
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        disabled={!isMicrosoftConnected}
+                      >
+                        {isMicrosoftConnected
+                          ? "Select up to 5 images"
+                          : "Connect Microsoft to upload images"}
                         <input
                           hidden
                           type="file"
                           accept="image/png,image/jpeg,image/webp"
                           multiple
                           onChange={handleImagesChange}
+                          disabled={!isMicrosoftConnected}
                         />
                       </Button>
 
                       <Typography variant="body2" color="text.secondary">
-                        You can add new images to this item.
+                        {isMicrosoftConnected
+                          ? "You can add new images to this item."
+                          : "New image uploads are disabled until you connect your Microsoft account."}
                       </Typography>
 
                       {imagePreviews.length > 0 && (
