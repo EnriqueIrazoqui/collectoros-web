@@ -14,7 +14,6 @@ import { formatCurrency } from "../../../utils/formatCurrency";
 
 function formatDate(value) {
   if (!value) return "-";
-
   return new Date(value).toLocaleDateString("en-US");
 }
 
@@ -26,10 +25,30 @@ const InventoryTable = ({
   onOpenPriceHistory,
 }) => {
   return (
-    <TableContainer component={Paper} sx={{ borderRadius: 4 }}>
+    <TableContainer
+      component={Paper}
+      sx={{
+        borderRadius: "24px",
+        overflow: "hidden",
+        backgroundColor: "background.paper",
+        border: "1px solid",
+        borderColor: "divider",
+        boxShadow: "none",
+      }}
+    >
       <Table>
         <TableHead>
-          <TableRow>
+          <TableRow
+            sx={{
+              "& th": {
+                borderBottom: "1px solid",
+                borderColor: "divider",
+                py: 2.5,
+                fontWeight: 500,
+                color: "text.primary",
+              },
+            }}
+          >
             <TableCell>Name</TableCell>
             <TableCell>Category</TableCell>
             <TableCell>Condition</TableCell>
@@ -43,17 +62,29 @@ const InventoryTable = ({
         </TableHead>
 
         <TableBody>
-          {items.map((item) => {
+          {items.map((item, index) => {
             const quantity = Number(item.quantity || 0);
             const purchaseValue = Number(item.purchasePrice || 0);
             const currentValue = Number(item.currentEstimatedValue || 0);
             const gain = currentValue - purchaseValue;
+            const isLastRow = index === items.length - 1;
 
             return (
-              <TableRow key={item.id} hover>
+              <TableRow
+                key={item.id}
+                hover
+                sx={{
+                  "& td": {
+                    py: 2.75,
+                    borderBottom: isLastRow ? "none" : "1px solid",
+                    borderColor: "divider",
+                    verticalAlign: "middle",
+                  },
+                }}
+              >
                 <TableCell>
                   <Box>
-                    <Typography fontWeight={600}>{item.name}</Typography>
+                    <Typography fontWeight={700}>{item.name}</Typography>
 
                     {item.description ? (
                       <Typography variant="body2" color="text.secondary">
@@ -64,19 +95,14 @@ const InventoryTable = ({
                 </TableCell>
 
                 <TableCell>{item.category || "-"}</TableCell>
-
                 <TableCell>{item.condition || "-"}</TableCell>
-
                 <TableCell align="right">{quantity}</TableCell>
-
                 <TableCell align="right">
                   {formatCurrency(purchaseValue)}
                 </TableCell>
-
                 <TableCell align="right">
                   {formatDate(item.purchaseDate)}
                 </TableCell>
-
                 <TableCell align="right">
                   {formatCurrency(currentValue)}
                 </TableCell>
@@ -85,7 +111,7 @@ const InventoryTable = ({
                   align="right"
                   sx={{
                     color: gain >= 0 ? "success.main" : "error.main",
-                    fontWeight: 600,
+                    fontWeight: 700,
                   }}
                 >
                   {gain > 0 ? "+" : ""}

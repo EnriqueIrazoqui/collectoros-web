@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import SessionManager from "../src/features/auth/components/SessionManager";
 import ProtectedRoute from "../src/features/auth/components/ProtectedRoute";
+import AdminRoute from "../src/features/auth/components/AdminRoute";
 import { useAuthToken } from "../src/features/auth/hooks/useAuthToken";
 
 import LoginPage from "../src/features/auth/pages/LoginPage";
@@ -8,6 +9,7 @@ import DashboardPage from "../src/features/dashboard/pages/DashboardPage";
 import InventoryPage from "../src/features/inventory/pages/InventoryPage";
 import WishlistPage from "../src/features/wishlist/pages/WishlistPage";
 import AnalyticsPage from "../src/features/analytics/pages/AnalyticsPage";
+import AdminUsersPage from "../src/features/admin/pages/AdminUsersPage";
 
 import AppLayout from "../src/components/layout/AppLayout";
 
@@ -47,6 +49,10 @@ function AppRouter() {
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+
+            <Route element={<AdminRoute />}>
+              <Route path="/admin/users" element={<AdminUsersPage />} />
+            </Route>
           </Route>
         </Route>
 
