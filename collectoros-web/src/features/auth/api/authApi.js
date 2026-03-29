@@ -27,10 +27,16 @@ async function getMicrosoftAuthUrlRequest() {
   return data;
 }
 
+async function markWelcomeSeenRequest() {
+  const { data } = await apiClient.patch("/auth/me/welcome/seen");
+  return data;
+}
+
 export {
   loginRequest,
   refreshRequest,
   logoutRequest,
   getCurrentUserRequest,
   getMicrosoftAuthUrlRequest,
+  markWelcomeSeenRequest,
 };

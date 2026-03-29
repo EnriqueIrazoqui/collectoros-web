@@ -3,6 +3,7 @@ import Inventory2Icon from "@mui/icons-material/Inventory2";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import ArticleIcon from '@mui/icons-material/Article';
 
 export const navigationItems = [
   {
@@ -10,6 +11,11 @@ export const navigationItems = [
     path: "/admin/users",
     icon: AdminPanelSettingsIcon,
     adminOnly: true,
+  },
+    {
+    label: "Get Started",
+    path: "/get-started",
+    icon: ArticleIcon,
   },
   {
     label: "Dashboard",

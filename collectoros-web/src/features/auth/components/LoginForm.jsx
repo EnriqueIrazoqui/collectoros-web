@@ -58,7 +58,7 @@ const LoginForm = ({ onSubmit, isLoading, errorMessage }) => {
           fullWidth
           disabled={isLoading}
         >
-          {isLoading ? "Ingresando..." : "Iniciar sesión"}
+          {isLoading ? "Entering...." : "Login"}
         </Button>
       </Stack>
     </Box>

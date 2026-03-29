@@ -10,6 +10,7 @@ import InventoryPage from "../src/features/inventory/pages/InventoryPage";
 import WishlistPage from "../src/features/wishlist/pages/WishlistPage";
 import AnalyticsPage from "../src/features/analytics/pages/AnalyticsPage";
 import AdminUsersPage from "../src/features/admin/pages/AdminUsersPage";
+import GetStartedPage from "../src/features/get-started/pages/GetStartedPage";
 
 import AppLayout from "../src/components/layout/AppLayout";
 
@@ -49,6 +50,7 @@ function AppRouter() {
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/get-started" element={<GetStartedPage />} />
 
             <Route element={<AdminRoute />}>
               <Route path="/admin/users" element={<AdminUsersPage />} />

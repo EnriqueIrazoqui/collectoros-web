@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Stack,
+  Typography,
+} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 
 import { useAuth } from "../../auth/hooks/useAuth";
@@ -41,11 +48,7 @@ const AdminUsersPage = () => {
 
   const [confirmDialog, setConfirmDialog] = useState(initialConfirmState);
 
-  const showFeedback = ({
-    severity = "success",
-    title = "",
-    message = "",
-  }) => {
+  const showFeedback = ({ severity = "success", title = "", message = "" }) => {
     setFeedback({
       open: true,
       severity,
@@ -70,6 +73,8 @@ const AdminUsersPage = () => {
         title: "User created",
         message: "The user was created successfully.",
       });
+
+      setOpenCreateDialog(false);
     } catch (error) {
       console.error(error);
 
@@ -157,8 +162,8 @@ const AdminUsersPage = () => {
     confirmDialog.type === "role"
       ? "Change user role"
       : confirmDialog.currentStatus
-      ? "Deactivate user"
-      : "Activate user";
+        ? "Deactivate user"
+        : "Activate user";
 
   const confirmMessage =
     confirmDialog.type === "role"
@@ -175,8 +180,8 @@ const AdminUsersPage = () => {
         ? "Make User"
         : "Make Admin"
       : confirmDialog.currentStatus
-      ? "Deactivate"
-      : "Activate";
+        ? "Deactivate"
+        : "Activate";
 
   const confirmColor =
     confirmDialog.type === "status"
