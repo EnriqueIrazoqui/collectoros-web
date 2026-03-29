@@ -35,6 +35,8 @@ const WishlistFormDialog = ({
 }) => {
   const [formValues, setFormValues] = useState(initialFormValues);
   const [localError, setLocalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -53,6 +55,8 @@ const WishlistFormDialog = ({
           : initialFormValues,
       );
       setLocalError("");
+      setFieldErrors({});
+      setFormError("");
     }
   }, [open, initialValues]);
 
@@ -86,6 +90,14 @@ const WishlistFormDialog = ({
       ...prev,
       [name]: value,
     }));
+
+    setFieldErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
+
+    setFormError("");
+    setLocalError("");
   };
 
   const handleDialogClose = (_, reason) => {
@@ -98,7 +110,7 @@ const WishlistFormDialog = ({
     onClose();
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const normalizedPurchaseUrl = normalizeUrl(formValues.purchaseUrl);
@@ -110,9 +122,52 @@ const WishlistFormDialog = ({
       return;
     }
 
-    setLocalError("");
+    try {
+      setLocalError("");
+      setFieldErrors({});
+      setFormError("");
 
-    onSubmit({
+      if (mode === "edit") {
+        await onSubmit(buildEditPayload());
+        return;
+      }
+
+      await onSubmit({
+        name: formValues.name.trim(),
+        category: formValues.category.trim(),
+        description: formValues.description.trim(),
+        targetPrice: Number(formValues.targetPrice),
+        currentObservedPrice: Number(formValues.currentObservedPrice),
+        priority: formValues.priority,
+        purchaseUrl: normalizedPurchaseUrl,
+        notes: formValues.notes.trim(),
+      });
+    } catch (error) {
+      const backendErrors = error?.response?.data?.errors || [];
+      const backendMessage =
+        error?.response?.data?.message || "An unexpected error occurred.";
+
+      if (backendErrors.length > 0) {
+        const formattedErrors = backendErrors.reduce((acc, current) => {
+          if (current?.path) {
+            acc[current.path] = current.message;
+          }
+          return acc;
+        }, {});
+
+        setFieldErrors(formattedErrors);
+      }
+
+      setFormError(backendMessage);
+    }
+  };
+
+  const buildEditPayload = () => {
+    if (!initialValues) return {};
+
+    const normalizedPurchaseUrl = normalizeUrl(formValues.purchaseUrl);
+
+    const nextValues = {
       name: formValues.name.trim(),
       category: formValues.category.trim(),
       description: formValues.description.trim(),
@@ -121,48 +176,29 @@ const WishlistFormDialog = ({
       priority: formValues.priority,
       purchaseUrl: normalizedPurchaseUrl,
       notes: formValues.notes.trim(),
+    };
+
+    const originalValues = {
+      name: initialValues.name ?? "",
+      category: initialValues.category ?? "",
+      description: initialValues.description ?? "",
+      targetPrice: Number(initialValues.targetPrice ?? 0),
+      currentObservedPrice: Number(initialValues.currentObservedPrice ?? 0),
+      priority: initialValues.priority ?? "Medium",
+      purchaseUrl: initialValues.purchaseUrl ?? "",
+      notes: initialValues.notes ?? "",
+    };
+
+    const payload = {};
+
+    Object.keys(nextValues).forEach((key) => {
+      if (nextValues[key] !== originalValues[key]) {
+        payload[key] = nextValues[key];
+      }
     });
 
-    onSubmit(normalizedValues);
+    return payload;
   };
-
-  const buildEditPayload = () => {
-  if (!initialValues) return {};
-
-  const normalizedPurchaseUrl = normalizeUrl(formValues.purchaseUrl);
-
-  const nextValues = {
-    name: formValues.name.trim(),
-    category: formValues.category.trim(),
-    description: formValues.description.trim(),
-    targetPrice: Number(formValues.targetPrice),
-    currentObservedPrice: Number(formValues.currentObservedPrice),
-    priority: formValues.priority,
-    purchaseUrl: normalizedPurchaseUrl,
-    notes: formValues.notes.trim(),
-  };
-
-  const originalValues = {
-    name: initialValues.name ?? "",
-    category: initialValues.category ?? "",
-    description: initialValues.description ?? "",
-    targetPrice: Number(initialValues.targetPrice ?? 0),
-    currentObservedPrice: Number(initialValues.currentObservedPrice ?? 0),
-    priority: initialValues.priority ?? "Medium",
-    purchaseUrl: initialValues.purchaseUrl ?? "",
-    notes: initialValues.notes ?? "",
-  };
-
-  const payload = {};
-
-  Object.keys(nextValues).forEach((key) => {
-    if (nextValues[key] !== originalValues[key]) {
-      payload[key] = nextValues[key];
-    }
-  });
-
-  return payload;
-};
 
   const dialogTitle =
     mode === "edit" ? "Edit wishlist item" : "Add wishlist item";
@@ -189,8 +225,8 @@ const WishlistFormDialog = ({
         <Stack component="form" spacing={3} onSubmit={handleSubmit}>
           {localError ? (
             <Alert severity="error">{localError}</Alert>
-          ) : errorMessage ? (
-            <Alert severity="error">{errorMessage}</Alert>
+          ) : formError || errorMessage ? (
+            <Alert severity="error">{formError || errorMessage}</Alert>
           ) : null}
 
           <Grid container spacing={2.5}>
@@ -202,6 +238,8 @@ const WishlistFormDialog = ({
                 onChange={handleChange}
                 fullWidth
                 required
+                error={!!fieldErrors.name}
+                helperText={fieldErrors.name || ""}
               />
             </Grid>
 
@@ -213,6 +251,8 @@ const WishlistFormDialog = ({
                 onChange={handleChange}
                 fullWidth
                 required
+                error={!!fieldErrors.category}
+                helperText={fieldErrors.category || ""}
               />
             </Grid>
 
@@ -225,6 +265,8 @@ const WishlistFormDialog = ({
                 fullWidth
                 multiline
                 minRows={2}
+                error={!!fieldErrors.description}
+                helperText={fieldErrors.description || ""}
               />
             </Grid>
 
@@ -238,6 +280,8 @@ const WishlistFormDialog = ({
                 fullWidth
                 required
                 inputProps={{ min: 0, step: "0.01" }}
+                error={!!fieldErrors.targetPrice}
+                helperText={fieldErrors.targetPrice || ""}
               />
             </Grid>
 
@@ -251,6 +295,8 @@ const WishlistFormDialog = ({
                 fullWidth
                 required
                 inputProps={{ min: 0, step: "0.01" }}
+                error={!!fieldErrors.currentObservedPrice}
+                helperText={fieldErrors.currentObservedPrice || ""}
               />
             </Grid>
 
@@ -263,6 +309,8 @@ const WishlistFormDialog = ({
                 onChange={handleChange}
                 fullWidth
                 required
+                error={!!fieldErrors.priority}
+                helperText={fieldErrors.priority || ""}
               >
                 <MenuItem value="High">High</MenuItem>
                 <MenuItem value="Medium">Medium</MenuItem>
@@ -277,6 +325,8 @@ const WishlistFormDialog = ({
                 value={formValues.purchaseUrl}
                 onChange={handleChange}
                 fullWidth
+                error={!!fieldErrors.purchaseUrl}
+                helperText={fieldErrors.purchaseUrl || ""}
               />
             </Grid>
 
@@ -289,6 +339,8 @@ const WishlistFormDialog = ({
                 fullWidth
                 multiline
                 minRows={3}
+                error={!!fieldErrors.notes}
+                helperText={fieldErrors.notes || ""}
               />
             </Grid>
           </Grid>

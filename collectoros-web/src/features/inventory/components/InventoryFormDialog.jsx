@@ -62,12 +62,16 @@ const InventoryFormDialog = ({
   );
   const [selectedImages, setSelectedImages] = useState([]);
   const [localImageError, setLocalImageError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     if (open) {
       setFormValues(getInitialFormValues(initialValues, mode));
       setSelectedImages([]);
       setLocalImageError("");
+      setFieldErrors({});
+      setFormError("");
     }
   }, [open, initialValues, mode]);
 
@@ -99,6 +103,13 @@ const InventoryFormDialog = ({
       ...prev,
       [name]: value,
     }));
+
+    setFieldErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
+
+    setFormError("");
   };
 
   const handleImagesChange = (event) => {
@@ -193,15 +204,37 @@ const InventoryFormDialog = ({
     return formData;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (mode === "edit") {
-      onSubmit(buildEditFormData());
-      return;
-    }
+    try {
+      setFieldErrors({});
+      setFormError("");
 
-    onSubmit(buildCreateFormData());
+      if (mode === "edit") {
+        await onSubmit(buildEditFormData());
+        return;
+      }
+
+      await onSubmit(buildCreateFormData());
+    } catch (error) {
+      const backendErrors = error?.response?.data?.errors || [];
+      const backendMessage =
+        error?.response?.data?.message || "An unexpected error occurred.";
+
+      if (backendErrors.length > 0) {
+        const formattedErrors = backendErrors.reduce((acc, current) => {
+          if (current?.path) {
+            acc[current.path] = current.message;
+          }
+          return acc;
+        }, {});
+
+        setFieldErrors(formattedErrors);
+      }
+
+      setFormError(backendMessage);
+    }
   };
 
   return (
@@ -223,7 +256,9 @@ const InventoryFormDialog = ({
       <Box component="form" onSubmit={handleSubmit}>
         <DialogContent dividers>
           <Stack spacing={3}>
-            {!!errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+            {!!(formError || errorMessage) && (
+              <Alert severity="error">{formError || errorMessage}</Alert>
+            )}
 
             {!!localImageError && (
               <Alert severity="warning">{localImageError}</Alert>
@@ -240,6 +275,8 @@ const InventoryFormDialog = ({
                       onChange={handleChange}
                       fullWidth
                       required
+                      error={!!fieldErrors.name}
+                      helperText={fieldErrors.name || ""}
                     />
                   </Grid>
 
@@ -250,6 +287,9 @@ const InventoryFormDialog = ({
                       value={formValues.category}
                       onChange={handleChange}
                       fullWidth
+                      required
+                      error={!!fieldErrors.category}
+                      helperText={fieldErrors.category || ""}
                     />
                   </Grid>
 
@@ -262,6 +302,8 @@ const InventoryFormDialog = ({
                       fullWidth
                       multiline
                       minRows={3}
+                      error={!!fieldErrors.description}
+                      helperText={fieldErrors.description || ""}
                     />
                   </Grid>
 
@@ -275,6 +317,8 @@ const InventoryFormDialog = ({
                       fullWidth
                       required
                       inputProps={{ min: 0, step: "0.01" }}
+                      error={!!fieldErrors.purchasePrice}
+                      helperText={fieldErrors.purchasePrice || ""}
                     />
                   </Grid>
 
@@ -287,6 +331,8 @@ const InventoryFormDialog = ({
                       onChange={handleChange}
                       fullWidth
                       InputLabelProps={{ shrink: true }}
+                      error={!!fieldErrors.purchaseDate}
+                      helperText={fieldErrors.purchaseDate || ""}
                     />
                   </Grid>
 
@@ -300,6 +346,8 @@ const InventoryFormDialog = ({
                       fullWidth
                       required
                       inputProps={{ min: 1, step: 1 }}
+                      error={!!fieldErrors.quantity}
+                      helperText={fieldErrors.quantity || ""}
                     />
                   </Grid>
 
@@ -313,6 +361,8 @@ const InventoryFormDialog = ({
                       fullWidth
                       required
                       inputProps={{ min: 0, step: "0.01" }}
+                      error={!!fieldErrors.currentEstimatedValue}
+                      helperText={fieldErrors.currentEstimatedValue || ""}
                     />
                   </Grid>
 
@@ -324,6 +374,8 @@ const InventoryFormDialog = ({
                       onChange={handleChange}
                       fullWidth
                       required
+                      error={!!fieldErrors.condition}
+                      helperText={fieldErrors.condition || ""}
                     />
                   </Grid>
 
@@ -436,6 +488,8 @@ const InventoryFormDialog = ({
                       fullWidth
                       multiline
                       minRows={3}
+                      error={!!fieldErrors.description}
+                      helperText={fieldErrors.description || ""}
                     />
                   </Grid>
 
@@ -449,6 +503,8 @@ const InventoryFormDialog = ({
                       fullWidth
                       required
                       inputProps={{ min: 0, step: "0.01" }}
+                      error={!!fieldErrors.currentEstimatedValue}
+                      helperText={fieldErrors.currentEstimatedValue || ""}
                     />
                   </Grid>
 
@@ -460,6 +516,8 @@ const InventoryFormDialog = ({
                       onChange={handleChange}
                       fullWidth
                       required
+                      error={!!fieldErrors.condition}
+                      helperText={fieldErrors.condition || ""}
                     />
                   </Grid>
 

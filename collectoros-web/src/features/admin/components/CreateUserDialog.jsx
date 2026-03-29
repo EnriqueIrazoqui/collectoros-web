@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   Dialog,
@@ -20,40 +20,65 @@ const initialForm = {
   role: "user",
 };
 
-const CreateUserDialog = ({ open, onClose, onSubmit, isSubmitting }) => {
+function CreateUserDialog({ open, onClose, onSubmit, isSubmitting }) {
   const [form, setForm] = useState(initialForm);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  useEffect(() => {
+    if (!open) {
+      setForm(initialForm);
+      setFieldErrors({});
+    }
+  }, [open]);
 
   const handleChange = (field) => (event) => {
+    const value = event.target.value;
+
     setForm((prev) => ({
       ...prev,
-      [field]: event.target.value,
+      [field]: value,
+    }));
+
+    setFieldErrors((prev) => ({
+      ...prev,
+      [field]: "",
     }));
   };
 
-  const handleClose = () => {
-    setForm(initialForm);
+  const handleClose = (_, reason) => {
+    if (reason === "backdropClick") return;
+    if (isSubmitting) return;
     onClose();
   };
 
   const handleSubmit = async () => {
-    await onSubmit({
-      email: form.email.trim(),
-      displayName: form.displayName.trim(),
-      password: form.password,
-      role: form.role,
-    });
+    try {
+      setFieldErrors({});
 
-    setForm(initialForm);
-    onClose();
+      await onSubmit({
+        email: form.email.trim(),
+        displayName: form.displayName.trim(),
+        password: form.password,
+        role: form.role,
+      });
+    } catch (error) {
+      const backendErrors = error?.response?.data?.errors || [];
+
+      const formattedErrors = backendErrors.reduce((acc, current) => {
+        if (current?.path) {
+          acc[current.path] = current.message;
+        }
+        return acc;
+      }, {});
+
+      setFieldErrors(formattedErrors);
+    }
   };
 
   return (
     <Dialog
       open={open}
-      onClose={(event, reason) => {
-        if (reason === "backdropClick") return;
-        handleClose();
-      }}
+      onClose={handleClose}
       fullWidth
       maxWidth="sm"
     >
@@ -66,6 +91,8 @@ const CreateUserDialog = ({ open, onClose, onSubmit, isSubmitting }) => {
             value={form.displayName}
             onChange={handleChange("displayName")}
             fullWidth
+            error={!!fieldErrors.displayName}
+            helperText={fieldErrors.displayName || ""}
           />
 
           <TextField
@@ -74,6 +101,8 @@ const CreateUserDialog = ({ open, onClose, onSubmit, isSubmitting }) => {
             value={form.email}
             onChange={handleChange("email")}
             fullWidth
+            error={!!fieldErrors.email}
+            helperText={fieldErrors.email || ""}
           />
 
           <TextField
@@ -82,9 +111,11 @@ const CreateUserDialog = ({ open, onClose, onSubmit, isSubmitting }) => {
             value={form.password}
             onChange={handleChange("password")}
             fullWidth
+            error={!!fieldErrors.password}
+            helperText={fieldErrors.password || ""}
           />
 
-          <FormControl fullWidth>
+          <FormControl fullWidth error={!!fieldErrors.role}>
             <InputLabel>Role</InputLabel>
             <Select
               value={form.role}
@@ -99,9 +130,10 @@ const CreateUserDialog = ({ open, onClose, onSubmit, isSubmitting }) => {
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={handleClose} disabled={isSubmitting}>
+        <Button onClick={onClose} disabled={isSubmitting}>
           Cancel
         </Button>
+
         <Button
           onClick={handleSubmit}
           variant="contained"
@@ -112,6 +144,6 @@ const CreateUserDialog = ({ open, onClose, onSubmit, isSubmitting }) => {
       </DialogActions>
     </Dialog>
   );
-};
+}
 
 export default CreateUserDialog;

@@ -6,6 +6,7 @@ import {
   CircularProgress,
   Button,
   Typography,
+  Stack, 
 } from "@mui/material";
 import InventoryToolbar from "../components/InventoryToolbar";
 import InventoryTable from "../components/InventoryTable";

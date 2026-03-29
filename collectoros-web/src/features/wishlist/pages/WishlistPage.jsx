@@ -136,7 +136,7 @@ const WishlistPage = () => {
     }));
   };
 
-  const handleCreateItem = async (formValues) => {
+  const handleCreateWishlistItem = async (formValues) => {
     try {
       await createWishlistMutation.mutateAsync(formValues);
 
@@ -165,6 +165,8 @@ const WishlistPage = () => {
           backendMessage,
         ),
       );
+
+      throw mutationError;
     }
   };
 
@@ -350,7 +352,7 @@ const WishlistPage = () => {
         isSubmitting={createWishlistMutation.isPending}
         errorMessage={createWishlistMutation.isError ? createErrorMessage : ""}
         onClose={handleCloseCreateDialog}
-        onSubmit={handleCreateItem}
+        onSubmit={handleCreateWishlistItem}
       />
 
       <WishlistFormDialog
