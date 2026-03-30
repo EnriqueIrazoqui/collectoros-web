@@ -7,8 +7,17 @@ import {
   clearAuthTokens,
 } from "../features/auth/utils/authStorage";
 
+const apiBaseUrl = import.meta.env.VITE_API_URL;
+
+// console.log("ENV:", import.meta.env);
+// console.log("API URL:", import.meta.env.VITE_API_URL);
+
+if (!apiBaseUrl) {
+  throw new Error("VITE_API_URL is not defined");
+}
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3001/api/v1",
+  baseURL: apiBaseUrl,
 });
 
 let isRefreshing = false;
