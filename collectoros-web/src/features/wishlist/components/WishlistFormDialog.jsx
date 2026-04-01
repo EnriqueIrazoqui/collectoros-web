@@ -292,6 +292,7 @@ const WishlistFormDialog = ({
                 <MenuItem value="console">Console</MenuItem>
                 <MenuItem value="artbook">Artbook</MenuItem>
                 <MenuItem value="merch">Merch</MenuItem>
+                <MenuItem value="watch">Watch</MenuItem>
                 <MenuItem value="other">Other</MenuItem>
               </TextField>
             </Grid>

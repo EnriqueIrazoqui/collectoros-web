@@ -67,6 +67,7 @@ const categories = [
   { value: "console", label: "Console" },
   { value: "artbook", label: "Artbook" },
   { value: "merch", label: "Merch" },
+  { value: "watch", label: "Watch" },
   { value: "other", label: "Other" },
 ];
 
@@ -85,7 +86,6 @@ const categories = [
   const isMicrosoftConnected =
     !!user?.microsoftAccountId || !!user?.microsoftConnected;
 
-  const inventoryItems = data?.data || [];
 
   const [feedback, setFeedback] = useState({
     open: false,
