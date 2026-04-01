@@ -1,26 +1,51 @@
 import apiClient from "../../../services/apiClient";
 
-export const getWishlistListRequest = async () => {
-  const { data } = await apiClient.get("/wishlist");
+const getWishlistListRequest = async ({
+  page = 1,
+  limit = 10,
+  search = "",
+  category = "all",
+  priority = "all",
+  sortBy = "createdAt-desc",
+}) => {
+  const { data } = await apiClient.get("/wishlist", {
+    params: {
+      page,
+      limit,
+      search,
+      category,
+      priority,
+      sortBy,
+    },
+  });
+
   return data;
 };
 
-export const getWishlistItemRequest = async (id) => {
+async function getWishlistItemRequest(id) {
   const { data } = await apiClient.get(`/wishlist/${id}`);
   return data;
-};
+}
 
-export const createWishlistItemRequest = async (payload) => {
+async function createWishlistItemRequest(payload) {
   const { data } = await apiClient.post("/wishlist", payload);
   return data;
-};
+}
 
-export const updateWishlistItemRequest = async ({ id, payload }) => {
+async function updateWishlistItemRequest({ id, payload }) {
   const { data } = await apiClient.patch(`/wishlist/${id}`, payload);
   return data;
-};
+}
 
-export const deleteWishlistItemRequest = async (id) => {
+async function deleteWishlistItemRequest(id) {
   const { data } = await apiClient.delete(`/wishlist/${id}`);
   return data;
+}
+
+export {
+  getWishlistListRequest,
+  getWishlistItemRequest,
+  createWishlistItemRequest,
+  updateWishlistItemRequest,
+  deleteWishlistItemRequest,
 };

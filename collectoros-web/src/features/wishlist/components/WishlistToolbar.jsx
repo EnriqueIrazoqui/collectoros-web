@@ -63,8 +63,8 @@ const WishlistToolbar = ({
             <MenuItem value="all">All</MenuItem>
 
             {categories.map((category) => (
-              <MenuItem key={category} value={category}>
-                {category}
+              <MenuItem key={category.value} value={category.value}>
+                {category.label}
               </MenuItem>
             ))}
           </Select>
@@ -102,11 +102,7 @@ const WishlistToolbar = ({
           </Select>
         </FormControl>
 
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={onAddItem}
-        >
+        <Button variant="contained" startIcon={<AddIcon />} onClick={onAddItem}>
           Add item
         </Button>
       </Box>

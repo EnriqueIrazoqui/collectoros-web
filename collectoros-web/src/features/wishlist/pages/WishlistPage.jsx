@@ -35,89 +35,62 @@ const WishlistPage = () => {
     message: "",
   });
 
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedPriority, setSelectedPriority] = useState("all");
   const [sortBy, setSortBy] = useState("name-asc");
 
-  const { data, isLoading, isError, error } = useWishlistList();
+  const { data, isLoading, isError, error } = useWishlistList({
+    page: page + 1,
+    limit: rowsPerPage,
+    search: searchTerm,
+    category: selectedCategory,
+    priority: selectedPriority,
+    sortBy,
+  });
+
+  const items = data?.data || [];
+  const pagination = data?.pagination || {};
   const createWishlistMutation = useCreateWishlistItem();
   const updateWishlistMutation = useUpdateWishlistItem();
   const deleteWishlistMutation = useDeleteWishlistItem();
   const wishlistItemQuery = useWishlistItem(viewingItemId, isViewDialogOpen);
 
-  const wishlistItems = data?.data || [];
+  const wishlistCategories = [
+    { value: "card", label: "Card" },
+    { value: "statue", label: "Statue" },
+    { value: "figure", label: "Figure" },
+    { value: "comic", label: "Comic" },
+    { value: "manga", label: "Manga" },
+    { value: "game", label: "Game" },
+    { value: "console", label: "Console" },
+    { value: "artbook", label: "Artbook" },
+    { value: "merch", label: "Merch" },
+    { value: "watch", label: "Watch" },
+    { value: "other", label: "Other" },
+  ];
 
-  const categories = useMemo(() => {
-    const uniqueCategories = Array.from(
-      new Set(wishlistItems.map((item) => item.category).filter(Boolean)),
-    );
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    setPage(0);
+  };
 
-    return uniqueCategories.sort((a, b) => a.localeCompare(b));
-  }, [wishlistItems]);
+  const handleCategoryChange = (value) => {
+    setSelectedCategory(value);
+    setPage(0);
+  };
 
-  const filteredItems = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+  const handlePriorityChange = (value) => {
+    setSelectedPriority(value);
+    setPage(0);
+  };
 
-    let result = [...wishlistItems];
-
-    if (normalizedSearch) {
-      result = result.filter((item) => {
-        const name = item.name?.toLowerCase() || "";
-        const category = item.category?.toLowerCase() || "";
-
-        return (
-          name.includes(normalizedSearch) || category.includes(normalizedSearch)
-        );
-      });
-    }
-
-    if (selectedCategory !== "all") {
-      result = result.filter((item) => item.category === selectedCategory);
-    }
-
-    if (selectedPriority !== "all") {
-      result = result.filter((item) => item.priority === selectedPriority);
-    }
-
-    result.sort((a, b) => {
-      const deltaA =
-        Number(a.currentObservedPrice || 0) - Number(a.targetPrice || 0);
-
-      const deltaB =
-        Number(b.currentObservedPrice || 0) - Number(b.targetPrice || 0);
-
-      switch (sortBy) {
-        case "name-asc":
-          return a.name.localeCompare(b.name);
-
-        case "name-desc":
-          return b.name.localeCompare(a.name);
-
-        case "targetPrice-desc":
-          return b.targetPrice - a.targetPrice;
-
-        case "targetPrice-asc":
-          return a.targetPrice - b.targetPrice;
-
-        case "observed-desc":
-          return b.currentObservedPrice - a.currentObservedPrice;
-
-        case "observed-asc":
-          return a.currentObservedPrice - b.currentObservedPrice;
-
-        case "delta-desc":
-          return deltaA - deltaB;
-
-        case "delta-asc":
-          return deltaB - deltaA;
-
-        default:
-          return 0;
-      }
-    });
-
-    return result;
-  }, [wishlistItems, searchTerm, selectedCategory, selectedPriority, sortBy]);
+  const handleSortChange = (value) => {
+    setSortBy(value);
+    setPage(0);
+  };
 
   const handleOpenCreateDialog = () => {
     setIsCreateDialogOpen(true);
@@ -318,28 +291,43 @@ const WishlistPage = () => {
     createWishlistMutation.error?.response?.data?.message ||
     "Could not create wishlist item.";
 
+  const hasActiveFilters =
+    Boolean(searchTerm.trim()) ||
+    selectedCategory !== "all" ||
+    selectedPriority !== "all";
+
   return (
     <Box>
       <WishlistToolbar
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        onCategoryChange={handleCategoryChange}
         selectedPriority={selectedPriority}
-        onPriorityChange={setSelectedPriority}
+        onPriorityChange={handlePriorityChange}
         sortBy={sortBy}
-        onSortChange={setSortBy}
-        categories={categories}
+        onSortChange={handleSortChange}
+        categories={wishlistCategories}
         onAddItem={handleOpenCreateDialog}
       />
 
-      {wishlistItems.length === 0 ? (
-        <WishlistEmptyState onAddItem={handleOpenCreateDialog} />
-      ) : filteredItems.length === 0 ? (
-        <WishlistFilteredEmptyState />
+      {items.length === 0 ? (
+        hasActiveFilters ? (
+          <WishlistFilteredEmptyState />
+        ) : (
+          <WishlistEmptyState onAddItem={handleOpenCreateDialog} />
+        )
       ) : (
         <WishlistTable
-          items={filteredItems}
+          items={items}
+          total={pagination?.total || 0}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          onRowsPerPageChange={(event) => {
+            setRowsPerPage(Number(event.target.value));
+            setPage(0);
+          }}
           onViewItem={handleViewItem}
           onEditItem={handleEditItem}
           onDeleteItem={handleDeleteItem}

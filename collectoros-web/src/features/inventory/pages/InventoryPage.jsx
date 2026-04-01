@@ -6,7 +6,7 @@ import {
   CircularProgress,
   Button,
   Typography,
-  Stack, 
+  Stack,
 } from "@mui/material";
 import InventoryToolbar from "../components/InventoryToolbar";
 import InventoryTable from "../components/InventoryTable";
@@ -45,8 +45,31 @@ const InventoryPage = () => {
   const [priceHistoryOpen, setPriceHistoryOpen] = useState(false);
   const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const hasActiveFilters = Boolean(searchTerm) || selectedCategory !== "all";
 
-  const { data, isLoading, isError, error } = useInventoryList();
+  const { data, isLoading, isError, error, isFetching } = useInventoryList({
+    page: page + 1,
+    limit: rowsPerPage,
+    search: searchTerm,
+    category: selectedCategory,
+    sortBy,
+  });
+
+const categories = [
+  { value: "figure", label: "Figure" },
+  { value: "statue", label: "Statue" },
+  { value: "card", label: "Card" },
+  { value: "comic", label: "Comic" },
+  { value: "manga", label: "Manga" },
+  { value: "game", label: "Game" },
+  { value: "console", label: "Console" },
+  { value: "artbook", label: "Artbook" },
+  { value: "merch", label: "Merch" },
+  { value: "other", label: "Other" },
+];
+
   const createInventoryMutation = useCreateInventoryItem();
   const updateInventoryMutation = useUpdateInventoryItem();
   const deleteInventoryMutation = useDeleteInventoryItem();
@@ -71,74 +94,23 @@ const InventoryPage = () => {
     message: "",
   });
 
-  const categories = useMemo(() => {
-    const uniqueCategories = Array.from(
-      new Set(inventoryItems.map((item) => item.category).filter(Boolean)),
-    );
+  const items = data?.data || [];
+  const pagination = data?.pagination;
 
-    return uniqueCategories.sort((a, b) => a.localeCompare(b));
-  }, [inventoryItems]);
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    setPage(0);
+  };
 
-  const filteredItems = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+  const handleCategoryChange = (value) => {
+    setSelectedCategory(value);
+    setPage(0);
+  };
 
-    let result = [...inventoryItems];
-
-    if (normalizedSearch) {
-      result = result.filter((item) => {
-        const name = item.name?.toLowerCase() || "";
-        const category = item.category?.toLowerCase() || "";
-
-        return (
-          name.includes(normalizedSearch) || category.includes(normalizedSearch)
-        );
-      });
-    }
-
-    if (selectedCategory !== "all") {
-      result = result.filter((item) => item.category === selectedCategory);
-    }
-
-    result.sort((a, b) => {
-      const gainA =
-        Number(a.currentEstimatedValue || 0) - Number(a.purchasePrice || 0);
-      const gainB =
-        Number(b.currentEstimatedValue || 0) - Number(b.purchasePrice || 0);
-
-      switch (sortBy) {
-        case "name-asc":
-          return (a.name || "").localeCompare(b.name || "");
-        case "name-desc":
-          return (b.name || "").localeCompare(a.name || "");
-        case "purchasePrice-desc":
-          return Number(b.purchasePrice || 0) - Number(a.purchasePrice || 0);
-        case "purchasePrice-asc":
-          return Number(a.purchasePrice || 0) - Number(b.purchasePrice || 0);
-        case "estimatedValue-desc":
-          return (
-            Number(b.currentEstimatedValue || 0) -
-            Number(a.currentEstimatedValue || 0)
-          );
-        case "estimatedValue-asc":
-          return (
-            Number(a.currentEstimatedValue || 0) -
-            Number(b.currentEstimatedValue || 0)
-          );
-        case "gain-desc":
-          return gainB - gainA;
-        case "gain-asc":
-          return gainA - gainB;
-        case "purchaseDate-desc":
-          return new Date(b.purchaseDate) - new Date(a.purchaseDate);
-        case "purchaseDate-asc":
-          return new Date(a.purchaseDate) - new Date(b.purchaseDate);
-        default:
-          return 0;
-      }
-    });
-
-    return result;
-  }, [inventoryItems, searchTerm, selectedCategory, sortBy]);
+  const handleSortChange = (value) => {
+    setSortBy(value);
+    setPage(0);
+  };
 
   const handleOpenPriceHistory = (item) => {
     setSelectedHistoryItem(item);
@@ -169,9 +141,26 @@ const InventoryPage = () => {
 
   const handleCreateItem = async (payload) => {
     try {
-      await createInventoryMutation.mutateAsync(payload);
+      const response = await createInventoryMutation.mutateAsync(payload);
 
       setIsCreateDialogOpen(false);
+
+      if (response?.warnings?.length) {
+        const backendWarningMessage = response.warnings
+          .map((warning) => warning.message)
+          .join(" ");
+
+        setFeedback(
+          buildFeedback({
+            ...feedbackMessages.createWarning,
+            message:
+              backendWarningMessage || feedbackMessages.createWarning.message,
+          }),
+        );
+
+        return;
+      }
+
       setFeedback(buildFeedback(feedbackMessages.createSuccess));
     } catch (mutationError) {
       console.error("Create inventory item error:", mutationError);
@@ -219,13 +208,29 @@ const InventoryPage = () => {
     }
 
     try {
-      await updateInventoryMutation.mutateAsync({
+      const response = await updateInventoryMutation.mutateAsync({
         id: editingItem.id,
         payload,
       });
 
       setIsEditDialogOpen(false);
       setEditingItem(null);
+
+      if (response?.warnings?.length) {
+        const backendWarningMessage = response.warnings
+          .map((warning) => warning.message)
+          .join(" ");
+
+        setFeedback(
+          buildFeedback({
+            ...feedbackMessages.updateWarning,
+            message:
+              backendWarningMessage || feedbackMessages.updateWarning.message,
+          }),
+        );
+
+        return;
+      }
 
       setFeedback(buildFeedback(feedbackMessages.updateSuccess));
     } catch (mutationError) {
@@ -381,24 +386,35 @@ const InventoryPage = () => {
           </Alert>
         )}
       </Box>
+
       <InventoryToolbar
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        onCategoryChange={handleCategoryChange}
         sortBy={sortBy}
-        onSortChange={setSortBy}
+        onSortChange={handleSortChange}
         categories={categories}
         onAddItem={handleOpenCreateDialog}
       />
 
-      {inventoryItems.length === 0 ? (
-        <InventoryEmptyState onAddItem={handleOpenCreateDialog} />
-      ) : filteredItems.length === 0 ? (
-        <InventoryFilteredEmptyState />
+      {items.length === 0 ? (
+        hasActiveFilters ? (
+          <InventoryFilteredEmptyState />
+        ) : (
+          <InventoryEmptyState onAddItem={handleOpenCreateDialog} />
+        )
       ) : (
         <InventoryTable
-          items={filteredItems}
+          items={items}
+          total={pagination?.total || 0}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          onRowsPerPageChange={(event) => {
+            setRowsPerPage(Number(event.target.value));
+            setPage(0);
+          }}
           onViewItem={handleViewItem}
           onEditItem={handleEditItem}
           onDeleteItem={handleDeleteItem}
