@@ -47,6 +47,7 @@ const categoryOptions = [
   { value: "console", label: "Console" },
   { value: "artbook", label: "Artbook" },
   { value: "merch", label: "Merch" },
+  { value: "watch", label: "Watch" },
   { value: "other", label: "Other" },
 ];
 
