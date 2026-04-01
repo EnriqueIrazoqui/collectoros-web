@@ -5,10 +5,24 @@ export const feedbackMessages = {
     message: "The inventory item was created successfully.",
   },
 
+  createWarning: {
+    severity: "warning",
+    title: "Item created with warnings",
+    message:
+      "The inventory item was created, but one or more images could not be uploaded.",
+  },
+
   updateSuccess: {
     severity: "info",
     title: "Item updated",
     message: "The inventory item was updated successfully.",
+  },
+
+  updateWarning: {
+    severity: "warning",
+    title: "Item updated with warnings",
+    message:
+      "The inventory item was updated, but one or more images could not be uploaded.",
   },
 
   deleteSuccess: {

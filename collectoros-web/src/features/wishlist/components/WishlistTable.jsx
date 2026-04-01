@@ -7,6 +7,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   Typography,
 } from "@mui/material";
@@ -23,7 +24,17 @@ const getPriorityColor = (priority) => {
   return "default";
 };
 
-const WishlistTable = ({ items = [], onViewItem, onEditItem, onDeleteItem }) => {
+const WishlistTable = ({
+  items = [],
+  total = 0,
+  page = 0,
+  rowsPerPage = 10,
+  onPageChange,
+  onRowsPerPageChange,
+  onViewItem,
+  onEditItem,
+  onDeleteItem,
+}) => {
   return (
     <TableContainer
       component={Paper}
@@ -133,6 +144,20 @@ const WishlistTable = ({ items = [], onViewItem, onEditItem, onDeleteItem }) => 
           })}
         </TableBody>
       </Table>
+
+      <TablePagination
+        component="div"
+        count={total}
+        page={page}
+        onPageChange={onPageChange}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={onRowsPerPageChange}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        sx={{
+          borderTop: "1px solid",
+          borderColor: "divider",
+        }}
+      />
     </TableContainer>
   );
 };

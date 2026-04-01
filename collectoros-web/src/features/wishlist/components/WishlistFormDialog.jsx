@@ -11,6 +11,7 @@ import {
   Stack,
   TextField,
   Typography,
+  InputAdornment,
 } from "@mui/material";
 
 const initialFormValues = {
@@ -36,7 +37,6 @@ const WishlistFormDialog = ({
   const [formValues, setFormValues] = useState(initialFormValues);
   const [localError, setLocalError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
-  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -57,6 +57,7 @@ const WishlistFormDialog = ({
       setLocalError("");
       setFieldErrors({});
       setFormError("");
+      setUrlTouched(false);
     }
   }, [open, initialValues]);
 
@@ -200,6 +201,24 @@ const WishlistFormDialog = ({
     return payload;
   };
 
+  const [formError, setFormError] = useState("");
+  const [urlTouched, setUrlTouched] = useState(false);
+
+  const getPurchaseUrlError = () => {
+    if (!urlTouched || !formValues.purchaseUrl.trim()) return "";
+
+    const normalizedValue = normalizeUrl(formValues.purchaseUrl);
+
+    if (!isValidUrl(normalizedValue)) {
+      return "Enter a valid URL, for example https://example.com";
+    }
+
+    return "";
+  };
+
+  const purchaseUrlErrorMessage =
+    fieldErrors.purchaseUrl || getPurchaseUrlError();
+
   const dialogTitle =
     mode === "edit" ? "Edit wishlist item" : "Add wishlist item";
 
@@ -215,10 +234,14 @@ const WishlistFormDialog = ({
         },
       }}
     >
-      <DialogTitle sx={{ pb: 1 }}>
-        <Typography variant="h5" fontWeight={700}>
-          {dialogTitle}
-        </Typography>
+      <DialogTitle
+        sx={{
+          pb: 1,
+          fontSize: "1.5rem",
+          fontWeight: 700,
+        }}
+      >
+        {dialogTitle}
       </DialogTitle>
 
       <DialogContent dividers sx={{ py: 3 }}>
@@ -230,7 +253,7 @@ const WishlistFormDialog = ({
           ) : null}
 
           <Grid container spacing={2.5}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="Name"
                 name="name"
@@ -243,8 +266,9 @@ const WishlistFormDialog = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
+                select
                 label="Category"
                 name="category"
                 value={formValues.category}
@@ -253,10 +277,26 @@ const WishlistFormDialog = ({
                 required
                 error={!!fieldErrors.category}
                 helperText={fieldErrors.category || ""}
-              />
+                sx={{
+                  "& .MuiInputBase-root": {
+                    minHeight: 56,
+                  },
+                }}
+              >
+                <MenuItem value="figure">Figure</MenuItem>
+                <MenuItem value="statue">Statue</MenuItem>
+                <MenuItem value="card">Card</MenuItem>
+                <MenuItem value="comic">Comic</MenuItem>
+                <MenuItem value="manga">Manga</MenuItem>
+                <MenuItem value="game">Game</MenuItem>
+                <MenuItem value="console">Console</MenuItem>
+                <MenuItem value="artbook">Artbook</MenuItem>
+                <MenuItem value="merch">Merch</MenuItem>
+                <MenuItem value="other">Other</MenuItem>
+              </TextField>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 label="Description"
                 name="description"
@@ -270,7 +310,7 @@ const WishlistFormDialog = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="Target price"
                 name="targetPrice"
@@ -279,13 +319,17 @@ const WishlistFormDialog = ({
                 onChange={handleChange}
                 fullWidth
                 required
-                inputProps={{ min: 0, step: "0.01" }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">$</InputAdornment>
+                  ),
+                }}
                 error={!!fieldErrors.targetPrice}
                 helperText={fieldErrors.targetPrice || ""}
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="Current observed price"
                 name="currentObservedPrice"
@@ -294,13 +338,17 @@ const WishlistFormDialog = ({
                 onChange={handleChange}
                 fullWidth
                 required
-                inputProps={{ min: 0, step: "0.01" }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">$</InputAdornment>
+                  ),
+                }}
                 error={!!fieldErrors.currentObservedPrice}
                 helperText={fieldErrors.currentObservedPrice || ""}
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 select
                 label="Priority"
@@ -318,19 +366,35 @@ const WishlistFormDialog = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="Purchase URL"
                 name="purchaseUrl"
                 value={formValues.purchaseUrl}
                 onChange={handleChange}
+                required
+                onBlur={() => {
+                  setUrlTouched(true);
+
+                  if (!formValues.purchaseUrl.trim()) return;
+
+                  const normalizedValue = normalizeUrl(formValues.purchaseUrl);
+
+                  setFormValues((prev) => ({
+                    ...prev,
+                    purchaseUrl: normalizedValue,
+                  }));
+                }}
                 fullWidth
-                error={!!fieldErrors.purchaseUrl}
-                helperText={fieldErrors.purchaseUrl || ""}
+                error={!!purchaseUrlErrorMessage}
+                helperText={
+                  purchaseUrlErrorMessage ||
+                  "Paste a store or marketplace link."
+                }
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="Notes"
                 name="notes"

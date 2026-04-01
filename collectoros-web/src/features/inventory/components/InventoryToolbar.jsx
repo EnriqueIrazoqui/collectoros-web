@@ -61,8 +61,8 @@ const InventoryToolbar = ({
             <MenuItem value="all">All categories</MenuItem>
 
             {categories.map((category) => (
-              <MenuItem key={category} value={category}>
-                {category}
+              <MenuItem key={category.value} value={category.value}>
+                {category.label}
               </MenuItem>
             ))}
           </Select>
@@ -77,13 +77,23 @@ const InventoryToolbar = ({
           >
             <MenuItem value="name-asc">Name (A-Z)</MenuItem>
             <MenuItem value="name-desc">Name (Z-A)</MenuItem>
-            <MenuItem value="purchasePrice-desc">Purchase price (high-low)</MenuItem>
-            <MenuItem value="purchasePrice-asc">Purchase price (low-high)</MenuItem>
-            <MenuItem value="estimatedValue-desc">Estimated value (high-low)</MenuItem>
-            <MenuItem value="estimatedValue-asc">Estimated value (low-high)</MenuItem>
+            <MenuItem value="purchasePrice-desc">
+              Purchase price (high-low)
+            </MenuItem>
+            <MenuItem value="purchasePrice-asc">
+              Purchase price (low-high)
+            </MenuItem>
+            <MenuItem value="estimatedValue-desc">
+              Estimated value (high-low)
+            </MenuItem>
+            <MenuItem value="estimatedValue-asc">
+              Estimated value (low-high)
+            </MenuItem>
             <MenuItem value="gain-desc">Gain / Loss (high-low)</MenuItem>
             <MenuItem value="gain-asc">Gain / Loss (low-high)</MenuItem>
-            <MenuItem value="purchaseDate-desc">Purchase date (newest)</MenuItem>
+            <MenuItem value="purchaseDate-desc">
+              Purchase date (newest)
+            </MenuItem>
             <MenuItem value="purchaseDate-asc">Purchase date (oldest)</MenuItem>
           </Select>
         </FormControl>

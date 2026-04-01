@@ -1,7 +1,22 @@
 import apiClient from "../../../services/apiClient";
 
-const getInventoryListRequest = async () => {
-  const { data } = await apiClient.get("/inventory");
+const getInventoryListRequest = async ({
+  page = 1,
+  limit = 10,
+  search = "",
+  category = "all",
+  sortBy = "purchaseDate-desc",
+}) => {
+  const { data } = await apiClient.get("/inventory", {
+    params: {
+      page,
+      limit,
+      search,
+      category,
+      sortBy,
+    },
+  });
+
   return data;
 };
 

@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import InventoryRowActions from "./InventoryRowActions";
 import { formatCurrency } from "../../../utils/formatCurrency";
+import { TablePagination } from "@mui/material";
 
 function formatDate(value) {
   if (!value) return "-";
@@ -19,6 +20,11 @@ function formatDate(value) {
 
 const InventoryTable = ({
   items = [],
+  total = 0,
+  page = 0,
+  rowsPerPage = 10,
+  onPageChange,
+  onRowsPerPageChange,
   onViewItem,
   onEditItem,
   onDeleteItem,
@@ -131,6 +137,15 @@ const InventoryTable = ({
           })}
         </TableBody>
       </Table>
+      <TablePagination
+        component="div"
+        count={total}
+        page={page}
+        onPageChange={onPageChange}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={onRowsPerPageChange}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+      />
     </TableContainer>
   );
 };

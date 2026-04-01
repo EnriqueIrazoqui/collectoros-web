@@ -22,12 +22,14 @@ const SessionManager = () => {
   const [countdown, setCountdown] = useState(WARNING_COUNTDOWN_SECONDS);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const clearTimers = useCallback(() => {
+  const clearIdleTimer = useCallback(() => {
     if (idleTimerRef.current) {
       window.clearTimeout(idleTimerRef.current);
       idleTimerRef.current = null;
     }
+  }, []);
 
+  const clearCountdownTimer = useCallback(() => {
     if (countdownTimerRef.current) {
       window.clearInterval(countdownTimerRef.current);
       countdownTimerRef.current = null;
@@ -40,21 +42,22 @@ const SessionManager = () => {
     } catch (error) {
       console.error("Logout request failed:", error);
     } finally {
-      clearTimers();
+      clearIdleTimer();
+      clearCountdownTimer();
       clearAuthTokens();
       setDialogOpen(false);
       navigate("/login", { replace: true });
     }
-  }, [clearTimers, navigate]);
+  }, [clearIdleTimer, clearCountdownTimer, navigate]);
 
   const startCountdown = useCallback(() => {
+    clearCountdownTimer();
     setCountdown(WARNING_COUNTDOWN_SECONDS);
 
     countdownTimerRef.current = window.setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          window.clearInterval(countdownTimerRef.current);
-          countdownTimerRef.current = null;
+          clearCountdownTimer();
           forceLogout();
           return 0;
         }
@@ -62,7 +65,7 @@ const SessionManager = () => {
         return prev - 1;
       });
     }, 1000);
-  }, [forceLogout]);
+  }, [clearCountdownTimer, forceLogout]);
 
   const openWarningDialog = useCallback(() => {
     setDialogOpen(true);
@@ -70,14 +73,14 @@ const SessionManager = () => {
   }, [startCountdown]);
 
   const resetIdleTimer = useCallback(() => {
-    clearTimers();
+    clearIdleTimer();
 
     if (dialogOpen) return;
 
     idleTimerRef.current = window.setTimeout(() => {
       openWarningDialog();
     }, IDLE_TIMEOUT_MS);
-  }, [clearTimers, dialogOpen, openWarningDialog]);
+  }, [clearIdleTimer, dialogOpen, openWarningDialog]);
 
   const handleContinueSession = useCallback(async () => {
     try {
@@ -103,6 +106,7 @@ const SessionManager = () => {
       setAccessToken(newAccessToken);
       setRefreshToken(newRefreshToken);
 
+      clearCountdownTimer();
       setDialogOpen(false);
       setCountdown(WARNING_COUNTDOWN_SECONDS);
       setIsRefreshing(false);
@@ -113,7 +117,7 @@ const SessionManager = () => {
       setIsRefreshing(false);
       await forceLogout();
     }
-  }, [forceLogout, resetIdleTimer]);
+  }, [clearCountdownTimer, forceLogout, resetIdleTimer]);
 
   useEffect(() => {
     const events = ["mousemove", "keydown", "click", "scroll"];
@@ -135,9 +139,9 @@ const SessionManager = () => {
         window.removeEventListener(eventName, handleUserActivity);
       });
 
-      clearTimers();
+      clearIdleTimer();
     };
-  }, [clearTimers, dialogOpen, resetIdleTimer]);
+  }, [clearIdleTimer, dialogOpen, resetIdleTimer]);
 
   return (
     <SessionTimeoutDialog
