@@ -19,8 +19,6 @@ import InventoryImage from "./InventoryImage";
 import ActionLoader from "../../../components/feedback/ActionLoader";
 import InputAdornment from "@mui/material/InputAdornment";
 
-const MAX_IMAGES = 5;
-
 const getTodayDate = () => {
   const today = new Date();
   const offset = today.getTimezoneOffset();
@@ -95,6 +93,9 @@ const InventoryFormDialog = ({
   const [localImageError, setLocalImageError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState("");
+  const MAX_IMAGES = 5;
+  const MAX_IMAGE_SIZE_MB = 5;
+  const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 
   const totalImagesCount =
     mode === "edit"
@@ -171,6 +172,18 @@ const InventoryFormDialog = ({
 
     if (currentCount + files.length > MAX_IMAGES) {
       setLocalImageError("You can only have up to 5 images per item.");
+      event.target.value = "";
+      return;
+    }
+
+    const oversizedFiles = files.filter(
+      (file) => file.size > MAX_IMAGE_SIZE_BYTES,
+    );
+
+    if (oversizedFiles.length > 0) {
+      setLocalImageError(
+        `Each image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`,
+      );
       event.target.value = "";
       return;
     }
@@ -574,7 +587,7 @@ const InventoryFormDialog = ({
                             ? "This item already has the maximum of 5 images."
                             : `You can add ${MAX_IMAGES - totalImagesCount} more image${
                                 MAX_IMAGES - totalImagesCount === 1 ? "" : "s"
-                              }.`}
+                              }. PNG, JPG, or WEBP up to ${MAX_IMAGE_SIZE_MB}MB each.`}
                       </Typography>
 
                       {imagePreviews.length > 0 && (
