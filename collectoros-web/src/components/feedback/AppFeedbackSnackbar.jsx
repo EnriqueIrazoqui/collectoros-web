@@ -39,21 +39,21 @@ const AppFeedbackSnackbar = ({
     const intervalId = window.setInterval(() => {
       setProgress((prev) => {
         const next = prev - decrement;
-
-        if (next <= 0) {
-          window.clearInterval(intervalId);
-          onClose?.();
-          return 0;
-        }
-
-        return next;
+        return next <= 0 ? 0 : next;
       });
     }, TICK_MS);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [open, isTimedFeedback, onClose]);
+  }, [open, isTimedFeedback]);
+
+  useEffect(() => {
+    if (!open || !isTimedFeedback) return;
+    if (progress > 0) return;
+
+    onClose?.();
+  }, [open, isTimedFeedback, progress, onClose]);
 
   const handleClose = (_, reason) => {
     if (reason === "clickaway") return;
@@ -83,7 +83,7 @@ const AppFeedbackSnackbar = ({
       <Alert
         severity={severity}
         variant="filled"
-        onClose={onClose}
+        onClose={handleClose}
         action={alertAction}
         sx={{
           width: 420,
