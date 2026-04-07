@@ -14,12 +14,16 @@ import {
   InputAdornment,
 } from "@mui/material";
 
+import {
+  sanitizePriceInput,
+  formatPriceInput,
+} from "../utils/priceInput.helper";
+
 const initialFormValues = {
   name: "",
   category: "",
   description: "",
   targetPrice: "",
-  currentObservedPrice: "",
   priority: "Medium",
   purchaseUrl: "",
   notes: "",
@@ -47,7 +51,6 @@ const WishlistFormDialog = ({
               category: initialValues.category ?? "",
               description: initialValues.description ?? "",
               targetPrice: initialValues.targetPrice ?? "",
-              currentObservedPrice: initialValues.currentObservedPrice ?? "",
               priority: initialValues.priority ?? "Medium",
               purchaseUrl: initialValues.purchaseUrl ?? "",
               notes: initialValues.notes ?? "",
@@ -138,7 +141,6 @@ const WishlistFormDialog = ({
         category: formValues.category.trim(),
         description: formValues.description.trim(),
         targetPrice: Number(formValues.targetPrice),
-        currentObservedPrice: Number(formValues.currentObservedPrice),
         priority: formValues.priority,
         purchaseUrl: normalizedPurchaseUrl,
         notes: formValues.notes.trim(),
@@ -173,7 +175,6 @@ const WishlistFormDialog = ({
       category: formValues.category.trim(),
       description: formValues.description.trim(),
       targetPrice: Number(formValues.targetPrice),
-      currentObservedPrice: Number(formValues.currentObservedPrice),
       priority: formValues.priority,
       purchaseUrl: normalizedPurchaseUrl,
       notes: formValues.notes.trim(),
@@ -184,7 +185,6 @@ const WishlistFormDialog = ({
       category: initialValues.category ?? "",
       description: initialValues.description ?? "",
       targetPrice: Number(initialValues.targetPrice ?? 0),
-      currentObservedPrice: Number(initialValues.currentObservedPrice ?? 0),
       priority: initialValues.priority ?? "Medium",
       purchaseUrl: initialValues.purchaseUrl ?? "",
       notes: initialValues.notes ?? "",
@@ -315,11 +315,38 @@ const WishlistFormDialog = ({
               <TextField
                 label="Target price"
                 name="targetPrice"
-                type="number"
-                value={formValues.targetPrice}
-                onChange={handleChange}
+                value={formatPriceInput(formValues.targetPrice)}
+                onChange={(e) => {
+                  const sanitized = sanitizePriceInput(e.target.value);
+
+                  setFormValues((prev) => ({
+                    ...prev,
+                    targetPrice: sanitized,
+                  }));
+
+                  setFieldErrors((prev) => ({
+                    ...prev,
+                    targetPrice: "",
+                  }));
+
+                  setFormError("");
+                  setLocalError("");
+                }}
+                onBlur={() => {
+                  if (!formValues.targetPrice) return;
+
+                  const value = Number(formValues.targetPrice);
+
+                  if (!isNaN(value)) {
+                    setFormValues((prev) => ({
+                      ...prev,
+                      targetPrice: value.toFixed(2),
+                    }));
+                  }
+                }}
                 fullWidth
                 required
+                inputMode="decimal"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">$</InputAdornment>
@@ -331,22 +358,11 @@ const WishlistFormDialog = ({
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Current observed price"
-                name="currentObservedPrice"
-                type="number"
-                value={formValues.currentObservedPrice}
-                onChange={handleChange}
-                fullWidth
-                required
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">$</InputAdornment>
-                  ),
-                }}
-                error={!!fieldErrors.currentObservedPrice}
-                helperText={fieldErrors.currentObservedPrice || ""}
-              />
+              <Typography variant="body2" color="text.secondary">
+                {mode === "edit"
+                  ? "The observed price is tracked automatically. If you change the product link, CollectorOS will run a new price check for this item."
+                  : "The observed price is automatically tracked from the product link. This helps you monitor price changes, detect drops, and know when it's a good time to buy."}
+              </Typography>
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
@@ -390,7 +406,9 @@ const WishlistFormDialog = ({
                 error={!!purchaseUrlErrorMessage}
                 helperText={
                   purchaseUrlErrorMessage ||
-                  "Paste a store or marketplace link."
+                  (mode === "edit"
+                    ? "Changing the product link will trigger a new price check automatically."
+                    : "Paste an Amazon or Mercado Libre product link. The observed price will be detected automatically.")
                 }
               />
             </Grid>

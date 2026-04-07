@@ -62,6 +62,69 @@ const getPriorityColor = (priority) => {
   return "default";
 };
 
+const formatStoreLabel = (store) => {
+  const normalized = String(store || "").toLowerCase();
+
+  if (normalized === "mercadolibre") return "Mercado Libre";
+  if (normalized === "amazon") return "Amazon";
+  if (normalized === "generic") return "Generic";
+
+  return store || "-";
+};
+
+const formatAvailabilityLabel = (availability) => {
+  const normalized = String(availability || "").toLowerCase();
+
+  if (normalized === "in_stock") return "In stock";
+  if (normalized === "out_of_stock") return "Out of stock";
+  if (normalized === "unknown") return "Unknown";
+
+  return availability || "-";
+};
+
+const getAvailabilityColor = (availability) => {
+  const normalized = String(availability || "").toLowerCase();
+
+  if (normalized === "in_stock") return "success";
+  if (normalized === "out_of_stock") return "error";
+  if (normalized === "unknown") return "default";
+
+  return "default";
+};
+
+const formatDateTime = (value) => {
+  if (!value) return "-";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return date.toLocaleString();
+};
+
+const formatShortUrl = (url) => {
+  if (!url) return "-";
+
+  try {
+    const parsed = new URL(url);
+
+    const domain = parsed.hostname.replace("www.", "");
+
+    const pathParts = parsed.pathname.split("/").filter(Boolean);
+
+    const lastPart = pathParts[pathParts.length - 1] || "";
+
+    const shortPath =
+      lastPart.length > 30 ? lastPart.slice(0, 30) + "..." : lastPart;
+
+    return `${domain} • ${shortPath}`;
+  } catch (error) {
+    return url;
+  }
+};
+
 const WishlistDetailsDialog = ({
   open,
   item,
@@ -81,6 +144,11 @@ const WishlistDetailsDialog = ({
   const targetPrice = Number(item?.targetPrice || 0);
   const observedPrice = Number(item?.currentObservedPrice || 0);
   const delta = observedPrice - targetPrice;
+
+  const storeLabel = formatStoreLabel(item?.store);
+  const availabilityLabel = formatAvailabilityLabel(item?.lastAvailability);
+  const availabilityColor = getAvailabilityColor(item?.lastAvailability);
+  const lastCheckedAtLabel = formatDateTime(item?.lastCheckedAt);
 
   return (
     <Dialog
@@ -167,10 +235,7 @@ const WishlistDetailsDialog = ({
               </Grid>
 
               <Grid item xs={12}>
-                <DetailItem
-                  label="Notes"
-                  value={item.notes || "-"}
-                />
+                <DetailItem label="Notes" value={item.notes || "-"} />
               </Grid>
 
               <Grid item xs={12}>
@@ -179,20 +244,83 @@ const WishlistDetailsDialog = ({
                 </Typography>
 
                 {item.purchaseUrl ? (
-                  <Link
-                    href={item.purchaseUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    underline="hover"
-                    sx={{ fontWeight: 600 }}
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    alignItems="center"
+                    flexWrap="wrap"
                   >
-                    {item.purchaseUrl}
-                  </Link>
+                    <Typography variant="body1" fontWeight={600}>
+                      {formatShortUrl(item.purchaseUrl)}
+                    </Typography>
+
+                    <Button
+                      size="small"
+                      component="a"
+                      href={item.purchaseUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open
+                    </Button>
+
+                    <Button
+                      size="small"
+                      onClick={() =>
+                        navigator.clipboard.writeText(item.purchaseUrl)
+                      }
+                    >
+                      Copy
+                    </Button>
+                  </Stack>
                 ) : (
                   <Typography variant="body1" fontWeight={600}>
                     -
                   </Typography>
                 )}
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }} />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="h6" fontWeight={700}>
+                  Tracking details
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <DetailItem label="Store" value={storeLabel} />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" mb={0.5}>
+                    Last availability
+                  </Typography>
+
+                  <Chip
+                    label={availabilityLabel}
+                    color={availabilityColor}
+                    size="small"
+                    variant="outlined"
+                  />
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <DetailItem
+                  label="Last provider source"
+                  value={item?.lastProviderSource || "-"}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <DetailItem
+                  label="Last checked at"
+                  value={lastCheckedAtLabel}
+                />
               </Grid>
             </Grid>
           </Stack>

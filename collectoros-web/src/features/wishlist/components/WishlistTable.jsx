@@ -13,6 +13,14 @@ import {
 } from "@mui/material";
 import WishlistRowActions from "./WishlistRowActions";
 import { formatCurrency } from "../../../utils/formatCurrency";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import TrackChangesIcon from "@mui/icons-material/TrackChanges";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import {
+  getWishlistItemStatus,
+  wishlistItemStatus,
+} from "../utils/getWishlistItemStatus";
 
 const getPriorityColor = (priority) => {
   const normalized = String(priority || "").toLowerCase();
@@ -24,8 +32,58 @@ const getPriorityColor = (priority) => {
   return "default";
 };
 
+const getStatusConfig = (status) => {
+  switch (status) {
+    case wishlistItemStatus.BUY_NOW:
+      return {
+        label: "Buy now",
+        color: "success",
+        icon: <TrackChangesIcon fontSize="small" />,
+        rowBorderColor: "success.main",
+        rowBackgroundColor: "rgba(76, 175, 80, 0.06)",
+      };
+
+    case wishlistItemStatus.NEAR_TARGET:
+      return {
+        label: "Near target",
+        color: "warning",
+        icon: <VisibilityOutlinedIcon fontSize="small" />,
+        rowBorderColor: "warning.main",
+        rowBackgroundColor: "rgba(255, 152, 0, 0.05)",
+      };
+
+    case wishlistItemStatus.PRICE_DROPPED:
+      return {
+        label: "Price dropped",
+        color: "info",
+        icon: <TrendingDownIcon fontSize="small" />,
+        rowBorderColor: "info.main",
+        rowBackgroundColor: "rgba(33, 150, 243, 0.05)",
+      };
+
+    case wishlistItemStatus.TRACKING_ERROR:
+      return {
+        label: "Tracking issue",
+        color: "error",
+        icon: <WarningAmberIcon fontSize="small" />,
+        rowBorderColor: "error.main",
+        rowBackgroundColor: "rgba(244, 67, 54, 0.05)",
+      };
+
+    default:
+      return {
+        label: "Watching",
+        color: "default",
+        icon: <VisibilityOutlinedIcon fontSize="small" />,
+        rowBorderColor: "transparent",
+        rowBackgroundColor: "transparent",
+      };
+  }
+};
+
 const WishlistTable = ({
   items = [],
+  alerts = [],
   total = 0,
   page = 0,
   rowsPerPage = 10,
@@ -63,6 +121,7 @@ const WishlistTable = ({
             <TableCell>Name</TableCell>
             <TableCell>Category</TableCell>
             <TableCell>Priority</TableCell>
+            <TableCell>Status</TableCell>
             <TableCell align="right">Target price</TableCell>
             <TableCell align="right">Observed price</TableCell>
             <TableCell align="right">Delta to target</TableCell>
@@ -77,11 +136,18 @@ const WishlistTable = ({
             const delta = observedPrice - targetPrice;
             const isLastRow = index === items.length - 1;
 
+            const status = getWishlistItemStatus(item, alerts);
+            const statusConfig = getStatusConfig(status);
+
+            const isBuyNow = status === wishlistItemStatus.BUY_NOW;
+            const isPriceDropped = status === wishlistItemStatus.PRICE_DROPPED;
+
             return (
               <TableRow
                 key={item.id}
                 hover
                 sx={{
+                  backgroundColor: statusConfig.rowBackgroundColor,
                   "& td": {
                     py: 2.75,
                     borderBottom: isLastRow ? "none" : "1px solid",
@@ -90,12 +156,21 @@ const WishlistTable = ({
                   },
                 }}
               >
-                <TableCell>
+                <TableCell
+                  sx={{
+                    borderLeft: "4px solid",
+                    borderLeftColor: statusConfig.rowBorderColor,
+                  }}
+                >
                   <Box>
                     <Typography fontWeight={700}>{item.name}</Typography>
 
                     {item.description ? (
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 0.35 }}
+                      >
                         {item.description}
                       </Typography>
                     ) : null}
@@ -110,15 +185,66 @@ const WishlistTable = ({
                     color={getPriorityColor(item.priority)}
                     size="small"
                     variant="outlined"
+                    sx={{
+                      fontWeight: 600,
+                      opacity: 0.9,
+                    }}
                   />
                 </TableCell>
 
-                <TableCell align="right">
+                <TableCell>
+                  <Chip
+                    icon={statusConfig.icon}
+                    label={statusConfig.label}
+                    color={statusConfig.color}
+                    size="small"
+                    variant={
+                      status === wishlistItemStatus.WATCHING
+                        ? "outlined"
+                        : "filled"
+                    }
+                    sx={{
+                      fontWeight: 700,
+                    }}
+                  />
+                </TableCell>
+
+                <TableCell
+                  align="right"
+                  sx={{
+                    whiteSpace: "nowrap",
+                    fontVariantNumeric: "tabular-nums",
+                    minWidth: 120,
+                  }}
+                >
                   {formatCurrency(targetPrice)}
                 </TableCell>
 
-                <TableCell align="right">
-                  {formatCurrency(observedPrice)}
+                <TableCell
+                  align="right"
+                  sx={{
+                    fontWeight: 700,
+                    color: isBuyNow
+                      ? "success.main"
+                      : isPriceDropped
+                        ? "info.main"
+                        : "text.primary",
+                    whiteSpace: "nowrap",
+                    fontVariantNumeric: "tabular-nums",
+                    minWidth: 120,
+                  }}
+                >
+                  {item.currentObservedPrice == null ? (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ whiteSpace: "nowrap" }}
+                    >
+                      Tracking...
+                    </Typography>
+                  ) : (
+                    formatCurrency(observedPrice)
+                  )}
                 </TableCell>
 
                 <TableCell
@@ -126,6 +252,9 @@ const WishlistTable = ({
                   sx={{
                     color: delta <= 0 ? "success.main" : "warning.main",
                     fontWeight: 700,
+                    whiteSpace: "nowrap",
+                    fontVariantNumeric: "tabular-nums",
+                    minWidth: 140,
                   }}
                 >
                   {delta > 0 ? "+" : ""}
