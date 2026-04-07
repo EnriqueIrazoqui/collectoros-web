@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getWishlistListRequest } from "../api/wishlistApi";
 
 export const useWishlistList = ({
@@ -7,6 +7,7 @@ export const useWishlistList = ({
   search = "",
   category = "all",
   priority = "all",
+  status = "all",
   sortBy = "createdAt-desc",
 }) => {
   return useQuery({
@@ -17,6 +18,7 @@ export const useWishlistList = ({
       search,
       category,
       priority,
+      status,
       sortBy,
     ],
     queryFn: () =>
@@ -26,9 +28,9 @@ export const useWishlistList = ({
         search,
         category,
         priority,
+        status,
         sortBy,
       }),
-    placeholderData: (previousData) => previousData,
-    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 };

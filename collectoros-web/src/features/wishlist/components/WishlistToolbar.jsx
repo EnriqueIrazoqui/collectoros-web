@@ -18,6 +18,8 @@ const WishlistToolbar = ({
   onCategoryChange,
   selectedPriority,
   onPriorityChange,
+  selectedStatus,
+  onStatusChange,
   sortBy,
   onSortChange,
   categories = [],
@@ -40,7 +42,7 @@ const WishlistToolbar = ({
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
-            md: "2fr 1fr 1fr 1fr auto",
+            md: "2fr 1fr 1fr 1fr 1fr auto",
           },
           gap: 2,
           alignItems: "center",
@@ -81,6 +83,22 @@ const WishlistToolbar = ({
             <MenuItem value="High">High</MenuItem>
             <MenuItem value="Medium">Medium</MenuItem>
             <MenuItem value="Low">Low</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth>
+          <InputLabel>Status</InputLabel>
+          <Select
+            label="Status"
+            value={selectedStatus}
+            onChange={(event) => onStatusChange(event.target.value)}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="buy_now">Buy now</MenuItem>
+            <MenuItem value="near_target">Near target</MenuItem>
+            <MenuItem value="price_dropped">Price dropped</MenuItem>
+            <MenuItem value="tracking_error">Tracking issue</MenuItem>
+            <MenuItem value="watching">Watching</MenuItem>
           </Select>
         </FormControl>
 

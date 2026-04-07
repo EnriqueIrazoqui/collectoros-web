@@ -6,6 +6,7 @@ const getWishlistListRequest = async ({
   search = "",
   category = "all",
   priority = "all",
+  status = "all",
   sortBy = "createdAt-desc",
 }) => {
   const { data } = await apiClient.get("/wishlist", {
@@ -15,6 +16,7 @@ const getWishlistListRequest = async ({
       search,
       category,
       priority,
+      status,
       sortBy,
     },
   });

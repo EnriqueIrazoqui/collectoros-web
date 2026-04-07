@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Alert, Box, CircularProgress } from "@mui/material";
 import WishlistToolbar from "../components/WishlistToolbar";
 import WishlistTable from "../components/WishlistTable";
@@ -18,6 +19,8 @@ import DeleteWishlistDialog from "../components/DeleteWishlistDialog";
 import { useDeleteWishlistItem } from "../hooks/useDeleteWishlistItem";
 import WishlistDetailsDialog from "../components/WishlistDetailsDialog";
 import { useWishlistItem } from "../hooks/useWishlistItem";
+import { useWishlistAlerts } from "../../alerts/hooks/useWishlistAlerts";
+import WishlistStatusSummary from "../components/WishlistStatusSummary";
 
 const WishlistPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,19 +38,26 @@ const WishlistPage = () => {
     message: "",
   });
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const wishlistAlertsQuery = useWishlistAlerts();
+  const wishlistAlerts = wishlistAlertsQuery.data?.data || [];
 
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedPriority, setSelectedPriority] = useState("all");
   const [sortBy, setSortBy] = useState("name-asc");
+  const [selectedStatus, setSelectedStatus] = useState("all");
 
-  const { data, isLoading, isError, error } = useWishlistList({
+  const { data, isLoading, isFetching, isError, error } = useWishlistList({
     page: page + 1,
     limit: rowsPerPage,
     search: searchTerm,
     category: selectedCategory,
     priority: selectedPriority,
+    status: selectedStatus,
     sortBy,
   });
 
@@ -89,6 +99,11 @@ const WishlistPage = () => {
 
   const handleSortChange = (value) => {
     setSortBy(value);
+    setPage(0);
+  };
+
+  const handleStatusChange = (value) => {
+    setSelectedStatus(value);
     setPage(0);
   };
 
@@ -146,11 +161,19 @@ const WishlistPage = () => {
   const handleOpenViewDialog = (item) => {
     setViewingItemId(item.id);
     setIsViewDialogOpen(true);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("viewItem", String(item.id));
+    setSearchParams(nextParams, { replace: true });
   };
 
   const handleCloseViewDialog = () => {
     setIsViewDialogOpen(false);
     setViewingItemId(null);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("viewItem");
+    setSearchParams(nextParams, { replace: true });
   };
 
   const handleViewItem = (item) => {
@@ -271,7 +294,22 @@ const WishlistPage = () => {
     handleOpenDeleteDialog(item);
   };
 
-  if (isLoading) {
+  useEffect(() => {
+    const viewItemParam = searchParams.get("viewItem");
+
+    if (!viewItemParam) {
+      return;
+    }
+
+    const parsedId = Number(viewItemParam);
+
+    if (!Number.isNaN(parsedId) && parsedId > 0) {
+      setViewingItemId(parsedId);
+      setIsViewDialogOpen(true);
+    }
+  }, [searchParams]);
+
+  if (isLoading && !data) {
     return (
       <Box display="flex" justifyContent="center" py={6}>
         <CircularProgress />
@@ -294,7 +332,8 @@ const WishlistPage = () => {
   const hasActiveFilters =
     Boolean(searchTerm.trim()) ||
     selectedCategory !== "all" ||
-    selectedPriority !== "all";
+    selectedPriority !== "all" ||
+    selectedStatus !== "all";
 
   return (
     <Box>
@@ -305,11 +344,15 @@ const WishlistPage = () => {
         onCategoryChange={handleCategoryChange}
         selectedPriority={selectedPriority}
         onPriorityChange={handlePriorityChange}
+        selectedStatus={selectedStatus}
+        onStatusChange={handleStatusChange}
         sortBy={sortBy}
         onSortChange={handleSortChange}
         categories={wishlistCategories}
         onAddItem={handleOpenCreateDialog}
       />
+
+      <WishlistStatusSummary items={items} alerts={wishlistAlerts} />
 
       {items.length === 0 ? (
         hasActiveFilters ? (
@@ -320,6 +363,7 @@ const WishlistPage = () => {
       ) : (
         <WishlistTable
           items={items}
+          alerts={wishlistAlerts}
           total={pagination?.total || 0}
           page={page}
           rowsPerPage={rowsPerPage}
