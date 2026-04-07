@@ -7,13 +7,31 @@ function notifyAuthChange() {
   listeners.forEach((listener) => listener());
 }
 
+function handleStorageChange(event) {
+  if (
+    event.key === ACCESS_TOKEN_KEY ||
+    event.key === REFRESH_TOKEN_KEY ||
+    event.key === null
+  ) {
+    notifyAuthChange();
+  }
+}
+
 function subscribeAuth(listener) {
   listeners.push(listener);
 
+  if (listeners.length === 1) {
+    window.addEventListener("storage", handleStorageChange);
+  }
+
   return () => {
     listeners = listeners.filter(
-      (currentListener) => currentListener !== listener
+      (currentListener) => currentListener !== listener,
     );
+
+    if (listeners.length === 0) {
+      window.removeEventListener("storage", handleStorageChange);
+    }
   };
 }
 
@@ -23,12 +41,12 @@ function getAccessToken() {
 
 function setAccessToken(token) {
   localStorage.setItem(ACCESS_TOKEN_KEY, token);
-  notifyAuthChange(); 
+  notifyAuthChange();
 }
 
 function removeAccessToken() {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
-  notifyAuthChange(); 
+  notifyAuthChange();
 }
 
 function getRefreshToken() {
@@ -37,19 +55,18 @@ function getRefreshToken() {
 
 function setRefreshToken(token) {
   localStorage.setItem(REFRESH_TOKEN_KEY, token);
-  notifyAuthChange(); 
+  notifyAuthChange();
 }
 
 function removeRefreshToken() {
   localStorage.removeItem(REFRESH_TOKEN_KEY);
-  notifyAuthChange(); 
+  notifyAuthChange();
 }
 
 function clearAuthTokens() {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
-
-  notifyAuthChange(); 
+  notifyAuthChange();
 }
 
 function hasAccessToken() {
@@ -65,5 +82,5 @@ export {
   removeRefreshToken,
   clearAuthTokens,
   hasAccessToken,
-  subscribeAuth, 
+  subscribeAuth,
 };

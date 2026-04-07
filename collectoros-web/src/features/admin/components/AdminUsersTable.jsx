@@ -30,14 +30,17 @@ function AdminUsersTable({
       component={Paper}
       sx={{
         borderRadius: "24px",
-        overflow: "hidden",
         backgroundColor: "background.paper",
         border: "1px solid",
         borderColor: "divider",
         boxShadow: "none",
+        overflowX: "auto",
+        overflowY: "hidden",
+        WebkitOverflowScrolling: "touch",
+        touchAction: "pan-x pan-y",
       }}
     >
-      <Table>
+      <Table sx={{ minWidth: 760 }}>
         <TableHead>
           <TableRow
             sx={{
@@ -47,6 +50,7 @@ function AdminUsersTable({
                 py: 2.5,
                 fontWeight: 500,
                 color: "text.primary",
+                whiteSpace: "nowrap",
               },
             }}
           >
@@ -54,7 +58,7 @@ function AdminUsersTable({
             <TableCell>Role</TableCell>
             <TableCell>Status</TableCell>
             <TableCell>Created At</TableCell>
-            <TableCell align="right">Actions</TableCell>
+            <TableCell align="center">Actions</TableCell>
           </TableRow>
         </TableHead>
 
@@ -76,18 +80,16 @@ function AdminUsersTable({
                   },
                 }}
               >
-                <TableCell>
+                <TableCell sx={{ minWidth: 220 }}>
                   <Box>
-                    <Typography fontWeight={700}>
-                      {user.displayName}
-                    </Typography>
+                    <Typography fontWeight={700}>{user.displayName}</Typography>
                     <Typography variant="body2" color="text.secondary">
                       {user.email}
                     </Typography>
                   </Box>
                 </TableCell>
 
-                <TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap" }}>
                   <Chip
                     label={user.role}
                     color={user.role === "admin" ? "secondary" : "default"}
@@ -95,7 +97,7 @@ function AdminUsersTable({
                   />
                 </TableCell>
 
-                <TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap" }}>
                   <Chip
                     label={user.isActive ? "Active" : "Inactive"}
                     color={user.isActive ? "success" : "error"}
@@ -103,20 +105,24 @@ function AdminUsersTable({
                   />
                 </TableCell>
 
-                <TableCell>{formatDate(user.createdAt)}</TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap" }}>
+                  {formatDate(user.createdAt)}
+                </TableCell>
 
-                <TableCell align="right">
+                <TableCell align="right" sx={{ minWidth: 220 }}>
                   <Stack
-                    direction="row"
-                    spacing={1}
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1.5}
                     justifyContent="flex-end"
-                    flexWrap="wrap"
+                    alignItems={{ xs: "stretch", sm: "center" }}
+                    sx={{ width: "100%" }}
                   >
                     <Button
                       size="small"
                       variant="outlined"
                       disabled={isSubmitting || isSelf}
                       onClick={() => onToggleRole?.(user)}
+                      sx={{ minHeight: 36 }}
                     >
                       {user.role === "admin" ? "Make User" : "Make Admin"}
                     </Button>
@@ -127,6 +133,7 @@ function AdminUsersTable({
                       color={user.isActive ? "warning" : "success"}
                       disabled={isSubmitting || isSelf}
                       onClick={() => onToggleStatus?.(user)}
+                      sx={{ minHeight: 36 }}
                     >
                       {user.isActive ? "Deactivate" : "Activate"}
                     </Button>
