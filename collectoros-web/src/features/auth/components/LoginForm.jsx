@@ -5,13 +5,18 @@ import {
   Button,
   Stack,
   TextField,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 const LoginForm = ({ onSubmit, isLoading, errorMessage }) => {
   const [formValues, setFormValues] = useState({
     email: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -25,6 +30,14 @@ const LoginForm = ({ onSubmit, isLoading, errorMessage }) => {
   const handleSubmit = (event) => {
     event.preventDefault();
     onSubmit(formValues);
+  };
+
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
+  const handleMouseDownPassword = (event) => {
+    event.preventDefault();
   };
 
   return (
@@ -45,11 +58,27 @@ const LoginForm = ({ onSubmit, isLoading, errorMessage }) => {
         <TextField
           label="Password"
           name="password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           value={formValues.password}
           onChange={handleChange}
           fullWidth
           required
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={handleTogglePasswordVisibility}
+                  onMouseDown={handleMouseDownPassword}
+                  edge="end"
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
 
         <Button
@@ -58,7 +87,7 @@ const LoginForm = ({ onSubmit, isLoading, errorMessage }) => {
           fullWidth
           disabled={isLoading}
         >
-          {isLoading ? "Entering...." : "Login"}
+          {isLoading ? "Entering..." : "Login"}
         </Button>
       </Stack>
     </Box>

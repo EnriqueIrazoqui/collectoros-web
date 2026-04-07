@@ -98,195 +98,242 @@ const WishlistTable = ({
       component={Paper}
       sx={{
         borderRadius: "24px",
-        overflow: "hidden",
         backgroundColor: "background.paper",
         border: "1px solid",
         borderColor: "divider",
         boxShadow: "none",
+        overflowX: "auto",
+        overflowY: "hidden",
+        WebkitOverflowScrolling: "touch",
+        touchAction: "pan-x pan-y",
       }}
     >
-      <Table>
-        <TableHead>
-          <TableRow
-            sx={{
-              "& th": {
-                borderBottom: "1px solid",
-                borderColor: "divider",
-                py: 2.5,
-                fontWeight: 500,
-                color: "text.primary",
-              },
-            }}
-          >
-            <TableCell>Name</TableCell>
-            <TableCell>Category</TableCell>
-            <TableCell>Priority</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell align="right">Target price</TableCell>
-            <TableCell align="right">Observed price</TableCell>
-            <TableCell align="right">Delta to target</TableCell>
-            <TableCell align="right">Actions</TableCell>
-          </TableRow>
-        </TableHead>
+      <Box
+        sx={{
+          display: "inline-block",
+          minWidth: "100%",
+        }}
+      >
+        <Table sx={{ minWidth: 980 }}>
+          <TableHead>
+            <TableRow
+              sx={{
+                "& th": {
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
+                  py: 2.5,
+                  fontWeight: 500,
+                  color: "text.primary",
+                  whiteSpace: "nowrap",
+                },
+              }}
+            >
+              <TableCell>Name</TableCell>
+              <TableCell>Category</TableCell>
+              <TableCell>Priority</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell align="right">Target price</TableCell>
+              <TableCell align="right">Observed price</TableCell>
+              <TableCell align="right">Delta to target</TableCell>
+              <TableCell align="center">Actions</TableCell>
+            </TableRow>
+          </TableHead>
 
-        <TableBody>
-          {items.map((item, index) => {
-            const targetPrice = Number(item.targetPrice || 0);
-            const observedPrice = Number(item.currentObservedPrice || 0);
-            const delta = observedPrice - targetPrice;
-            const isLastRow = index === items.length - 1;
+          <TableBody>
+            {items.map((item, index) => {
+              const targetPrice = Number(item.targetPrice || 0);
+              const observedPrice = Number(item.currentObservedPrice || 0);
+              const delta = observedPrice - targetPrice;
+              const isLastRow = index === items.length - 1;
 
-            const status = getWishlistItemStatus(item, alerts);
-            const statusConfig = getStatusConfig(status);
+              const status = getWishlistItemStatus(item, alerts);
+              const statusConfig = getStatusConfig(status);
 
-            const isBuyNow = status === wishlistItemStatus.BUY_NOW;
-            const isPriceDropped = status === wishlistItemStatus.PRICE_DROPPED;
+              const isBuyNow = status === wishlistItemStatus.BUY_NOW;
+              const isPriceDropped = status === wishlistItemStatus.PRICE_DROPPED;
 
-            return (
-              <TableRow
-                key={item.id}
-                hover
-                sx={{
-                  backgroundColor: statusConfig.rowBackgroundColor,
-                  "& td": {
-                    py: 2.75,
-                    borderBottom: isLastRow ? "none" : "1px solid",
-                    borderColor: "divider",
-                    verticalAlign: "middle",
-                  },
-                }}
-              >
-                <TableCell
+              return (
+                <TableRow
+                  key={item.id}
+                  hover
                   sx={{
-                    borderLeft: "4px solid",
-                    borderLeftColor: statusConfig.rowBorderColor,
+                    backgroundColor: statusConfig.rowBackgroundColor,
+                    "& td": {
+                      py: 2.75,
+                      borderBottom: isLastRow ? "none" : "1px solid",
+                      borderColor: "divider",
+                      verticalAlign: "middle",
+                    },
                   }}
                 >
-                  <Box>
-                    <Typography fontWeight={700}>{item.name}</Typography>
+                  <TableCell
+                    sx={{
+                      minWidth: 240,
+                      borderLeft: "4px solid",
+                      borderLeftColor: statusConfig.rowBorderColor,
+                    }}
+                  >
+                    <Box>
+                      <Typography fontWeight={700}>{item.name}</Typography>
 
-                    {item.description ? (
+                      {item.description ? (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mt: 0.35 }}
+                        >
+                          {item.description}
+                        </Typography>
+                      ) : null}
+                    </Box>
+                  </TableCell>
+
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
+                    {item.category || "-"}
+                  </TableCell>
+
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
+                    <Chip
+                      label={item.priority || "Unknown"}
+                      color={getPriorityColor(item.priority)}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        fontWeight: 600,
+                        opacity: 0.9,
+                      }}
+                    />
+                  </TableCell>
+
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
+                    <Chip
+                      icon={statusConfig.icon}
+                      label={statusConfig.label}
+                      color={statusConfig.color}
+                      size="small"
+                      variant={
+                        status === wishlistItemStatus.WATCHING
+                          ? "outlined"
+                          : "filled"
+                      }
+                      sx={{
+                        fontWeight: 700,
+                      }}
+                    />
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      whiteSpace: "nowrap",
+                      fontVariantNumeric: "tabular-nums",
+                      minWidth: 120,
+                    }}
+                  >
+                    {formatCurrency(targetPrice)}
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      fontWeight: 700,
+                      color: isBuyNow
+                        ? "success.main"
+                        : isPriceDropped
+                          ? "info.main"
+                          : "text.primary",
+                      whiteSpace: "nowrap",
+                      fontVariantNumeric: "tabular-nums",
+                      minWidth: 120,
+                    }}
+                  >
+                    {item.currentObservedPrice == null ? (
                       <Typography
                         variant="body2"
                         color="text.secondary"
-                        sx={{ mt: 0.35 }}
+                        sx={{ whiteSpace: "nowrap" }}
                       >
-                        {item.description}
+                        Tracking...
                       </Typography>
-                    ) : null}
-                  </Box>
-                </TableCell>
+                    ) : (
+                      formatCurrency(observedPrice)
+                    )}
+                  </TableCell>
 
-                <TableCell>{item.category || "-"}</TableCell>
-
-                <TableCell>
-                  <Chip
-                    label={item.priority || "Unknown"}
-                    color={getPriorityColor(item.priority)}
-                    size="small"
-                    variant="outlined"
+                  <TableCell
+                    align="right"
                     sx={{
-                      fontWeight: 600,
-                      opacity: 0.9,
-                    }}
-                  />
-                </TableCell>
-
-                <TableCell>
-                  <Chip
-                    icon={statusConfig.icon}
-                    label={statusConfig.label}
-                    color={statusConfig.color}
-                    size="small"
-                    variant={
-                      status === wishlistItemStatus.WATCHING
-                        ? "outlined"
-                        : "filled"
-                    }
-                    sx={{
+                      color: delta <= 0 ? "success.main" : "warning.main",
                       fontWeight: 700,
+                      whiteSpace: "nowrap",
+                      fontVariantNumeric: "tabular-nums",
+                      minWidth: 140,
                     }}
-                  />
-                </TableCell>
+                  >
+                    {delta > 0 ? "+" : ""}
+                    {formatCurrency(delta)}
+                  </TableCell>
 
-                <TableCell
-                  align="right"
-                  sx={{
-                    whiteSpace: "nowrap",
-                    fontVariantNumeric: "tabular-nums",
-                    minWidth: 120,
-                  }}
-                >
-                  {formatCurrency(targetPrice)}
-                </TableCell>
-
-                <TableCell
-                  align="right"
-                  sx={{
-                    fontWeight: 700,
-                    color: isBuyNow
-                      ? "success.main"
-                      : isPriceDropped
-                        ? "info.main"
-                        : "text.primary",
-                    whiteSpace: "nowrap",
-                    fontVariantNumeric: "tabular-nums",
-                    minWidth: 120,
-                  }}
-                >
-                  {item.currentObservedPrice == null ? (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ whiteSpace: "nowrap" }}
+                  <TableCell align="center" sx={{ minWidth: 100 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                      }}
                     >
-                      Tracking...
-                    </Typography>
-                  ) : (
-                    formatCurrency(observedPrice)
-                  )}
-                </TableCell>
+                      <WishlistRowActions
+                        onView={() => onViewItem?.(item)}
+                        onEdit={() => onEditItem?.(item)}
+                        onDelete={() => onDeleteItem?.(item)}
+                      />
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
 
-                <TableCell
-                  align="right"
-                  sx={{
-                    color: delta <= 0 ? "success.main" : "warning.main",
-                    fontWeight: 700,
-                    whiteSpace: "nowrap",
-                    fontVariantNumeric: "tabular-nums",
-                    minWidth: 140,
-                  }}
-                >
-                  {delta > 0 ? "+" : ""}
-                  {formatCurrency(delta)}
-                </TableCell>
-
-                <TableCell align="right">
-                  <WishlistRowActions
-                    onView={() => onViewItem?.(item)}
-                    onEdit={() => onEditItem?.(item)}
-                    onDelete={() => onDeleteItem?.(item)}
-                  />
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-
-      <TablePagination
-        component="div"
-        count={total}
-        page={page}
-        onPageChange={onPageChange}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={onRowsPerPageChange}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        sx={{
-          borderTop: "1px solid",
-          borderColor: "divider",
-        }}
-      />
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={onPageChange}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={onRowsPerPageChange}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          sx={{
+            width: "100%",
+            borderTop: "1px solid",
+            borderColor: "divider",
+            "& .MuiTablePagination-toolbar": {
+              px: { xs: 1, sm: 2 },
+              minHeight: { xs: 64, sm: 52 },
+              flexWrap: { xs: "wrap", sm: "nowrap" },
+              justifyContent: { xs: "center", sm: "flex-end" },
+              alignItems: "center",
+              columnGap: { xs: 1, sm: 0 },
+              rowGap: { xs: 1, sm: 0 },
+            },
+            "& .MuiTablePagination-spacer": {
+              display: { xs: "none", sm: "block" },
+              flex: "1 1 auto",
+            },
+            "& .MuiTablePagination-selectLabel": {
+              margin: 0,
+              whiteSpace: "nowrap",
+            },
+            "& .MuiTablePagination-displayedRows": {
+              margin: 0,
+              whiteSpace: "nowrap",
+            },
+            "& .MuiTablePagination-actions": {
+              marginLeft: { xs: 0, sm: 1 },
+              flexShrink: 0,
+            },
+          }}
+        />
+      </Box>
     </TableContainer>
   );
 };
