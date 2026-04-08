@@ -17,20 +17,10 @@ export const useUpdateWishlistItem = () => {
     onSuccess: async (_, variables) => {
       invalidateWishlistEcosystem();
 
-      const payload = variables?.payload || {};
-      const purchaseUrlChanged = Object.prototype.hasOwnProperty.call(
-        payload,
-        "purchaseUrl",
-      );
-
-      if (purchaseUrlChanged) {
-        setTimeout(() => {
-          invalidateWishlistEcosystem();
-        }, 2000);
-
-        setTimeout(() => {
-          invalidateWishlistEcosystem();
-        }, 5000);
+      if (variables?.id) {
+        queryClient.invalidateQueries({
+          queryKey: ["wishlist-item", variables.id],
+        });
       }
     },
   });

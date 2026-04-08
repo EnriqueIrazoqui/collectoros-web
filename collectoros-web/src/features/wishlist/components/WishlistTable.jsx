@@ -17,6 +17,9 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import {
   getWishlistItemStatus,
   wishlistItemStatus,
@@ -30,6 +33,41 @@ const getPriorityColor = (priority) => {
   if (normalized === "low") return "success";
 
   return "default";
+};
+
+const getTrackingVisualState = (item, activelyPollingIds = []) => {
+  const lastCheckStatus = String(item.lastCheckStatus || "").toLowerCase();
+  const isLocallyPolling = activelyPollingIds.includes(item.id);
+
+  if (lastCheckStatus === "error" || lastCheckStatus === "not_found") {
+    return {
+      label: "Tracking issue",
+      color: "error",
+      icon: <WarningAmberIcon fontSize="small" />,
+    };
+  }
+
+  if (item.currentObservedPrice != null || lastCheckStatus === "success") {
+    return {
+      label: "Updated",
+      color: "success",
+      icon: <CheckCircleOutlineIcon fontSize="small" />,
+    };
+  }
+
+  if (isLocallyPolling) {
+    return {
+      label: "Processing",
+      color: "info",
+      icon: <AutorenewIcon fontSize="small" />,
+    };
+  }
+
+  return {
+    label: "Queued",
+    color: "default",
+    icon: <ScheduleIcon fontSize="small" />,
+  };
 };
 
 const getStatusConfig = (status) => {
@@ -92,6 +130,7 @@ const WishlistTable = ({
   onViewItem,
   onEditItem,
   onDeleteItem,
+  trackingItemIds = [],
 }) => {
   return (
     <TableContainer
@@ -142,15 +181,24 @@ const WishlistTable = ({
           <TableBody>
             {items.map((item, index) => {
               const targetPrice = Number(item.targetPrice || 0);
-              const observedPrice = Number(item.currentObservedPrice || 0);
-              const delta = observedPrice - targetPrice;
+              const hasObservedPrice = item.currentObservedPrice != null;
+              const observedPrice = hasObservedPrice
+                ? Number(item.currentObservedPrice)
+                : null;
+              const delta = hasObservedPrice ? observedPrice - targetPrice : null;
               const isLastRow = index === items.length - 1;
 
               const status = getWishlistItemStatus(item, alerts);
               const statusConfig = getStatusConfig(status);
+              const trackingVisualState = getTrackingVisualState(
+                item,
+                trackingItemIds,
+              );
 
               const isBuyNow = status === wishlistItemStatus.BUY_NOW;
-              const isPriceDropped = status === wishlistItemStatus.PRICE_DROPPED;
+              const isPriceDropped =
+                status === wishlistItemStatus.PRICE_DROPPED;
+              const isTrackingRow = trackingItemIds.includes(item.id);
 
               return (
                 <TableRow
@@ -184,6 +232,20 @@ const WishlistTable = ({
                         >
                           {item.description}
                         </Typography>
+                      ) : null}
+
+                      {isTrackingRow ? (
+                        <Chip
+                          icon={trackingVisualState.icon}
+                          label={trackingVisualState.label}
+                          color={trackingVisualState.color}
+                          size="small"
+                          variant="outlined"
+                          sx={{
+                            mt: 1,
+                            fontWeight: 600,
+                          }}
+                        />
                       ) : null}
                     </Box>
                   </TableCell>
@@ -244,34 +306,45 @@ const WishlistTable = ({
                           : "text.primary",
                       whiteSpace: "nowrap",
                       fontVariantNumeric: "tabular-nums",
-                      minWidth: 120,
+                      minWidth: 160,
                     }}
                   >
-                    {item.currentObservedPrice == null ? (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ whiteSpace: "nowrap" }}
-                      >
-                        Tracking...
-                      </Typography>
-                    ) : (
+                    {hasObservedPrice ? (
                       formatCurrency(observedPrice)
+                    ) : (
+                      <Box
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 0.75,
+                          color: "text.secondary",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {trackingVisualState.icon}
+                        <Typography variant="body2" color="text.secondary">
+                          {trackingVisualState.label}
+                        </Typography>
+                      </Box>
                     )}
                   </TableCell>
 
                   <TableCell
                     align="right"
                     sx={{
-                      color: delta <= 0 ? "success.main" : "warning.main",
+                      color:
+                        delta == null
+                          ? "text.secondary"
+                          : delta <= 0
+                            ? "success.main"
+                            : "warning.main",
                       fontWeight: 700,
                       whiteSpace: "nowrap",
                       fontVariantNumeric: "tabular-nums",
                       minWidth: 140,
                     }}
                   >
-                    {delta > 0 ? "+" : ""}
-                    {formatCurrency(delta)}
+                    {delta == null ? "-" : `${delta > 0 ? "+" : ""}${formatCurrency(delta)}`}
                   </TableCell>
 
                   <TableCell align="center" sx={{ minWidth: 100 }}>

@@ -14,14 +14,6 @@ export const useCreateWishlistItem = () => {
     mutationFn: createWishlistItemRequest,
     onSuccess: async () => {
       invalidateWishlistEcosystem();
-
-      setTimeout(() => {
-        invalidateWishlistEcosystem();
-      }, 2000);
-
-      setTimeout(() => {
-        invalidateWishlistEcosystem();
-      }, 5000);
     },
   });
 };

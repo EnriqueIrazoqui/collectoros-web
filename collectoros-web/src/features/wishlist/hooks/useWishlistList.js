@@ -9,6 +9,7 @@ export const useWishlistList = ({
   priority = "all",
   status = "all",
   sortBy = "createdAt-desc",
+  pollingEnabled = false,
 }) => {
   return useQuery({
     queryKey: [
@@ -32,5 +33,8 @@ export const useWishlistList = ({
         sortBy,
       }),
     placeholderData: keepPreviousData,
+    refetchInterval: pollingEnabled ? 3000 : false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
   });
 };

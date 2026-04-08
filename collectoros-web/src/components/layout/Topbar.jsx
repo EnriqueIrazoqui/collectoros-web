@@ -16,7 +16,6 @@ import { useNavigate } from "react-router-dom";
 import { useLogout } from "../../features/auth/hooks/useLogout";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { useWishlistAlerts } from "../../features/alerts/hooks/useWishlistAlerts";
-import { useWishlistAlertsUnreadCount } from "../../features/alerts/hooks/useWishlistAlertsUnreadCount";
 import { useMarkWishlistAlertAsRead } from "../../features/alerts/hooks/useMarkWishlistAlertAsRead";
 import { useMarkAllWishlistAlertsAsRead } from "../../features/alerts/hooks/useMarkAllWishlistAlertsAsRead";
 import TopbarAlertsMenu from "../../features/alerts/components/TopbarAlertsMenu";
@@ -30,7 +29,6 @@ const Topbar = ({ onMenuClick }) => {
   const [alertsAnchorEl, setAlertsAnchorEl] = useState(null);
 
   const alertsQuery = useWishlistAlerts();
-  const unreadCountQuery = useWishlistAlertsUnreadCount();
   const markAlertAsReadMutation = useMarkWishlistAlertAsRead();
   const markAllAsReadMutation = useMarkAllWishlistAlertsAsRead();
 
@@ -107,7 +105,7 @@ const Topbar = ({ onMenuClick }) => {
   const avatarLetter = userLabel.charAt(0).toUpperCase();
 
   const alerts = alertsQuery.data?.data || [];
-  const unreadCount = unreadCountQuery.data?.data || 0;
+  const unreadCount = alerts.filter((alert) => alert.status === "unread").length;
 
   return (
     <AppBar

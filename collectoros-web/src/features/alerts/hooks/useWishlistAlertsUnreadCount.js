@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { getWishlistAlertsUnreadCountRequest } from "../api/wishlistAlertsApi";
 
-export const useWishlistAlertsUnreadCount = () => {
+export const useWishlistAlertsUnreadCount = ({ pollingEnabled = false } = {}) => {
   return useQuery({
     queryKey: ["wishlist-alerts-unread-count"],
     queryFn: getWishlistAlertsUnreadCountRequest,
-    refetchInterval: 60000,
+    refetchInterval: pollingEnabled ? 3000 : 60000,
+    refetchOnWindowFocus: false,
   });
 };
