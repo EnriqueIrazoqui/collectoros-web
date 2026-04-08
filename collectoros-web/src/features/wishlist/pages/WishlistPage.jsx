@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Alert, Box, CircularProgress } from "@mui/material";
 import WishlistToolbar from "../components/WishlistToolbar";
@@ -21,6 +21,7 @@ import WishlistDetailsDialog from "../components/WishlistDetailsDialog";
 import { useWishlistItem } from "../hooks/useWishlistItem";
 import { useWishlistAlerts } from "../../alerts/hooks/useWishlistAlerts";
 import WishlistStatusSummary from "../components/WishlistStatusSummary";
+import { useQueryClient } from "@tanstack/react-query";
 
 const WishlistPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,18 +39,28 @@ const WishlistPage = () => {
     message: "",
   });
 
+  const queryClient = useQueryClient();
+
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const wishlistAlertsQuery = useWishlistAlerts();
+  const [isTemporaryPollingActive, setIsTemporaryPollingActive] =
+    useState(false);
+
+  const wishlistAlertsQuery = useWishlistAlerts({
+    pollingEnabled: isTemporaryPollingActive,
+  });
   const wishlistAlerts = wishlistAlertsQuery.data?.data || [];
 
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedPriority, setSelectedPriority] = useState("all");
   const [sortBy, setSortBy] = useState("name-asc");
   const [selectedStatus, setSelectedStatus] = useState("all");
+
+  const [trackingItemIds, setTrackingItemIds] = useState([]);
+  const pollingTimeoutRef = useRef(null);
 
   const { data, isLoading, isFetching, isError, error } = useWishlistList({
     page: page + 1,
@@ -59,6 +70,7 @@ const WishlistPage = () => {
     priority: selectedPriority,
     status: selectedStatus,
     sortBy,
+    pollingEnabled: isTemporaryPollingActive,
   });
 
   const items = data?.data || [];
@@ -66,7 +78,11 @@ const WishlistPage = () => {
   const createWishlistMutation = useCreateWishlistItem();
   const updateWishlistMutation = useUpdateWishlistItem();
   const deleteWishlistMutation = useDeleteWishlistItem();
-  const wishlistItemQuery = useWishlistItem(viewingItemId, isViewDialogOpen);
+  const wishlistItemQuery = useWishlistItem(
+    viewingItemId,
+    isViewDialogOpen,
+    isViewDialogOpen && isTemporaryPollingActive,
+  );
 
   const wishlistCategories = [
     { value: "card", label: "Card" },
@@ -81,6 +97,37 @@ const WishlistPage = () => {
     { value: "watch", label: "Watch" },
     { value: "other", label: "Other" },
   ];
+
+const startTemporaryPolling = (itemId = null) => {
+  setIsTemporaryPollingActive(true);
+
+  if (itemId) {
+    setTrackingItemIds((prev) =>
+      prev.includes(itemId) ? prev : [...prev, itemId],
+    );
+  }
+
+  if (pollingTimeoutRef.current) {
+    clearTimeout(pollingTimeoutRef.current);
+  }
+
+  pollingTimeoutRef.current = setTimeout(async () => {
+    setIsTemporaryPollingActive(false);
+    setTrackingItemIds([]);
+
+    await queryClient.invalidateQueries({ queryKey: ["wishlist-list"] });
+    await queryClient.invalidateQueries({ queryKey: ["wishlist-alerts"] });
+    await queryClient.invalidateQueries({
+      queryKey: ["wishlist-alerts-unread-count"],
+    });
+
+    if (itemId) {
+      await queryClient.invalidateQueries({
+        queryKey: ["wishlist-item", itemId],
+      });
+    }
+  }, 20000);
+};
 
   const handleSearchChange = (value) => {
     setSearchTerm(value);
@@ -126,15 +173,19 @@ const WishlistPage = () => {
 
   const handleCreateWishlistItem = async (formValues) => {
     try {
-      await createWishlistMutation.mutateAsync(formValues);
+      const response = await createWishlistMutation.mutateAsync(formValues);
+      const createdItemId =
+        response?.data?.id || response?.data?.item?.id || null;
 
       setIsCreateDialogOpen(false);
+      startTemporaryPolling(createdItemId);
 
       setFeedback(
         buildFeedback({
           severity: "success",
           title: "Wishlist item created",
-          message: "The wishlist item was created successfully.",
+          message:
+            "The item was created. Price tracking may take a few seconds to finish.",
         }),
       );
     } catch (mutationError) {
@@ -210,6 +261,15 @@ const WishlistPage = () => {
         payload,
       });
 
+      const shouldTriggerTrackingPolling =
+        Object.prototype.hasOwnProperty.call(payload, "purchaseUrl") ||
+        Object.prototype.hasOwnProperty.call(payload, "isTrackingEnabled") ||
+        Object.prototype.hasOwnProperty.call(payload, "trackingFrequencyHours");
+
+      if (shouldTriggerTrackingPolling) {
+        startTemporaryPolling(editingItem.id);
+      }
+
       setIsEditDialogOpen(false);
       setEditingItem(null);
 
@@ -217,7 +277,9 @@ const WishlistPage = () => {
         buildFeedback({
           severity: "info",
           title: "Wishlist item updated",
-          message: "The wishlist item was updated successfully.",
+          message: shouldTriggerTrackingPolling
+            ? "The item was updated. Price tracking may take a few seconds to refresh."
+            : "The wishlist item was updated successfully.",
         }),
       );
     } catch (mutationError) {
@@ -295,6 +357,14 @@ const WishlistPage = () => {
   };
 
   useEffect(() => {
+    return () => {
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     const viewItemParam = searchParams.get("viewItem");
 
     if (!viewItemParam) {
@@ -308,6 +378,72 @@ const WishlistPage = () => {
       setIsViewDialogOpen(true);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!items.length || trackingItemIds.length === 0) {
+      return;
+    }
+
+    setTrackingItemIds((prev) =>
+      prev.filter((trackingId) => {
+        const currentItem = items.find((item) => item.id === trackingId);
+
+        if (!currentItem) {
+          return false;
+        }
+
+        const lastCheckStatus = String(
+          currentItem.lastCheckStatus || "",
+        ).toLowerCase();
+
+        const hasFinishedSuccessfully =
+          currentItem.currentObservedPrice != null;
+        const hasFinishedWithTerminalStatus =
+          lastCheckStatus === "success" ||
+          lastCheckStatus === "error" ||
+          lastCheckStatus === "not_found" ||
+          lastCheckStatus === "rate_limited";
+
+        return !(hasFinishedSuccessfully || hasFinishedWithTerminalStatus);
+      }),
+    );
+  }, [items, trackingItemIds]);
+
+useEffect(() => {
+  if (!items.length || trackingItemIds.length === 0) {
+    return;
+  }
+
+  const finishedIds = trackingItemIds.filter((trackingId) => {
+    const currentItem = items.find((item) => item.id === trackingId);
+
+    if (!currentItem) {
+      return true;
+    }
+
+    const lastCheckStatus = String(currentItem.lastCheckStatus || "").toLowerCase();
+
+    return (
+      currentItem.currentObservedPrice != null ||
+      lastCheckStatus === "success" ||
+      lastCheckStatus === "error" ||
+      lastCheckStatus === "not_found" ||
+      lastCheckStatus === "rate_limited"
+    );
+  });
+
+  if (finishedIds.length > 0) {
+    finishedIds.forEach((finishedId) => {
+      queryClient.invalidateQueries({
+        queryKey: ["wishlist-item", finishedId],
+      });
+    });
+  }
+
+  setTrackingItemIds((prev) =>
+    prev.filter((trackingId) => !finishedIds.includes(trackingId)),
+  );
+}, [items, trackingItemIds, queryClient]);
 
   if (isLoading && !data) {
     return (
@@ -367,6 +503,8 @@ const WishlistPage = () => {
           total={pagination?.total || 0}
           page={page}
           rowsPerPage={rowsPerPage}
+          trackingItemIds={trackingItemIds}
+          isPollingActive={isTemporaryPollingActive}
           onPageChange={(_, newPage) => setPage(newPage)}
           onRowsPerPageChange={(event) => {
             setRowsPerPage(Number(event.target.value));
