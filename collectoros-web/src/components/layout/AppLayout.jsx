@@ -8,11 +8,13 @@ import AppFooter from "./AppFooter";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { useMarkWelcomeSeen } from "../../features/auth/hooks/useMarkWelcomeSeen";
 import WelcomeDialog from "../../features/auth/components/WelcomeDialog";
+import WhatsNewLatestDialog from "../../features/whats-new/components/WhatsNewLatestDialog";
 
 const AppLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
   const [hasCheckedWelcome, setHasCheckedWelcome] = useState(false);
+  const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
 
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -70,6 +72,12 @@ const AppLayout = () => {
         onStartNow={handleStartNow}
         onViewGuide={handleViewGuide}
         isSubmitting={markWelcomeSeenMutation.isPending}
+      />
+
+      <WhatsNewLatestDialog
+        open={isWhatsNewOpen}
+        onOpen={() => setIsWhatsNewOpen(true)}
+        onClose={() => setIsWhatsNewOpen(false)}
       />
 
       <Box sx={{ display: "flex", minHeight: "100vh" }}>
