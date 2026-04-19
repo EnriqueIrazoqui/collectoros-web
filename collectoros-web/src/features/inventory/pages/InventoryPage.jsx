@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Alert,
@@ -48,28 +48,36 @@ const InventoryPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const hasActiveFilters = Boolean(searchTerm) || selectedCategory !== "all";
+  const [isTemporaryPollingActive, setIsTemporaryPollingActive] =
+    useState(false);
+  const pollingTimeoutRef = useRef(null);
 
-  const { data, isLoading, isError, error, isFetching } = useInventoryList({
-    page: page + 1,
-    limit: rowsPerPage,
-    search: searchTerm,
-    category: selectedCategory,
-    sortBy,
-  });
+  const { data, isLoading, isError, error, isFetching } = useInventoryList(
+    {
+      page: page + 1,
+      limit: rowsPerPage,
+      search: searchTerm,
+      category: selectedCategory,
+      sortBy,
+    },
+    {
+      refetchInterval: isTemporaryPollingActive ? 3000 : false,
+    },
+  );
 
-const categories = [
-  { value: "figure", label: "Figure" },
-  { value: "statue", label: "Statue" },
-  { value: "card", label: "Card" },
-  { value: "comic", label: "Comic" },
-  { value: "manga", label: "Manga" },
-  { value: "game", label: "Game" },
-  { value: "console", label: "Console" },
-  { value: "artbook", label: "Artbook" },
-  { value: "merch", label: "Merch" },
-  { value: "watch", label: "Watch" },
-  { value: "other", label: "Other" },
-];
+  const categories = [
+    { value: "figure", label: "Figure" },
+    { value: "statue", label: "Statue" },
+    { value: "card", label: "Card" },
+    { value: "comic", label: "Comic" },
+    { value: "manga", label: "Manga" },
+    { value: "game", label: "Game" },
+    { value: "console", label: "Console" },
+    { value: "artbook", label: "Artbook" },
+    { value: "merch", label: "Merch" },
+    { value: "watch", label: "Watch" },
+    { value: "other", label: "Other" },
+  ];
 
   const createInventoryMutation = useCreateInventoryItem();
   const updateInventoryMutation = useUpdateInventoryItem();
@@ -85,7 +93,6 @@ const categories = [
   const { user } = useAuth();
   const isMicrosoftConnected =
     !!user?.microsoftAccountId || !!user?.microsoftConnected;
-
 
   const [feedback, setFeedback] = useState({
     open: false,
@@ -144,6 +151,13 @@ const categories = [
       const response = await createInventoryMutation.mutateAsync(payload);
 
       setIsCreateDialogOpen(false);
+
+      const isTrackingEnabled = payload.get("isTrackingEnabled") === "true";
+      const trackingUrl = payload.get("trackingUrl");
+
+      if (isTrackingEnabled && trackingUrl) {
+        startTemporaryPolling();
+      }
 
       if (response?.warnings?.length) {
         const backendWarningMessage = response.warnings
@@ -213,8 +227,27 @@ const categories = [
         payload,
       });
 
+      const isTrackingEnabled =
+        payload instanceof FormData
+          ? (payload.get("isTrackingEnabled") ??
+              String(Boolean(editingItem?.isTrackingEnabled))) === "true"
+          : Boolean(
+              payload?.isTrackingEnabled ?? editingItem?.isTrackingEnabled,
+            );
+
+      const trackingUrl =
+        payload instanceof FormData
+          ? (payload.get("trackingUrl") ?? editingItem?.trackingUrl)
+          : (payload?.trackingUrl ?? editingItem?.trackingUrl);
+
+      const shouldTriggerPolling = Boolean(isTrackingEnabled && trackingUrl);
+
       setIsEditDialogOpen(false);
       setEditingItem(null);
+
+      if (shouldTriggerPolling) {
+        startTemporaryPolling();
+      }
 
       if (response?.warnings?.length) {
         const backendWarningMessage = response.warnings
@@ -320,6 +353,26 @@ const categories = [
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
+  const startTemporaryPolling = () => {
+    setIsTemporaryPollingActive(true);
+
+    if (pollingTimeoutRef.current) {
+      clearTimeout(pollingTimeoutRef.current);
+    }
+
+    pollingTimeoutRef.current = setTimeout(() => {
+      setIsTemporaryPollingActive(false);
+    }, 20000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return (
