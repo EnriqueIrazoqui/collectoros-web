@@ -39,7 +39,19 @@ const getTrackingVisualState = (item, activelyPollingIds = []) => {
   const lastCheckStatus = String(item.lastCheckStatus || "").toLowerCase();
   const isLocallyPolling = activelyPollingIds.includes(item.id);
 
-  if (lastCheckStatus === "error" || lastCheckStatus === "not_found") {
+  if (lastCheckStatus === "bot_protection") {
+    return {
+      label: "Retry scheduled",
+      color: "warning",
+      icon: <WarningAmberIcon fontSize="small" />,
+    };
+  }
+
+  if (
+    lastCheckStatus === "error" ||
+    lastCheckStatus === "not_found" ||
+    lastCheckStatus === "rate_limited"
+  ) {
     return {
       label: "Tracking issue",
       color: "error",
@@ -185,7 +197,9 @@ const WishlistTable = ({
               const observedPrice = hasObservedPrice
                 ? Number(item.currentObservedPrice)
                 : null;
-              const delta = hasObservedPrice ? observedPrice - targetPrice : null;
+              const delta = hasObservedPrice
+                ? observedPrice - targetPrice
+                : null;
               const isLastRow = index === items.length - 1;
 
               const status = getWishlistItemStatus(item, alerts);
@@ -198,7 +212,9 @@ const WishlistTable = ({
               const isBuyNow = status === wishlistItemStatus.BUY_NOW;
               const isPriceDropped =
                 status === wishlistItemStatus.PRICE_DROPPED;
-              const isTrackingRow = trackingItemIds.includes(item.id);
+              const shouldShowTrackingChip =
+                trackingItemIds.includes(item.id) ||
+                item.lastCheckStatus === "bot_protection";
 
               return (
                 <TableRow
@@ -234,7 +250,7 @@ const WishlistTable = ({
                         </Typography>
                       ) : null}
 
-                      {isTrackingRow ? (
+                      {shouldShowTrackingChip ? (
                         <Chip
                           icon={trackingVisualState.icon}
                           label={trackingVisualState.label}
@@ -344,7 +360,9 @@ const WishlistTable = ({
                       minWidth: 140,
                     }}
                   >
-                    {delta == null ? "-" : `${delta > 0 ? "+" : ""}${formatCurrency(delta)}`}
+                    {delta == null
+                      ? "-"
+                      : `${delta > 0 ? "+" : ""}${formatCurrency(delta)}`}
                   </TableCell>
 
                   <TableCell align="center" sx={{ minWidth: 100 }}>
