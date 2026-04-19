@@ -13,6 +13,8 @@ import {
   TextField,
   Typography,
   MenuItem,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import InventoryImage from "./InventoryImage";
@@ -49,6 +51,11 @@ const categoryOptions = [
   { value: "other", label: "Other" },
 ];
 
+const currencyOptions = [
+  { value: "MXN", label: "MXN" },
+  { value: "USD", label: "USD" },
+];
+
 const getInitialFormValues = (initialValues, mode) => {
   if (mode === "edit" && initialValues) {
     return {
@@ -60,6 +67,10 @@ const getInitialFormValues = (initialValues, mode) => {
       currentEstimatedValue: initialValues.currentEstimatedValue ?? "",
       quantity: initialValues.quantity ?? 1,
       condition: initialValues.condition ?? "",
+      trackingUrl: initialValues.trackingUrl ?? "",
+      isTrackingEnabled: Boolean(initialValues.isTrackingEnabled),
+      trackingFrequencyHours: initialValues.trackingFrequencyHours ?? 24,
+      currency: initialValues.currency ?? "MXN",
     };
   }
 
@@ -72,6 +83,10 @@ const getInitialFormValues = (initialValues, mode) => {
     currentEstimatedValue: "",
     quantity: 1,
     condition: "",
+    trackingUrl: "",
+    isTrackingEnabled: false,
+    trackingFrequencyHours: 24,
+    currency: "MXN",
   };
 };
 
@@ -140,12 +155,21 @@ const InventoryFormDialog = ({
   };
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
+    const { name, value, type, checked } = event.target;
+    const nextValue = type === "checkbox" ? checked : value;
 
-    setFormValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormValues((prev) => {
+      const nextFormValues = {
+        ...prev,
+        [name]: nextValue,
+      };
+
+      if (name === "isTrackingEnabled" && checked) {
+        nextFormValues.currentEstimatedValue = "";
+      }
+
+      return nextFormValues;
+    });
 
     setFieldErrors((prev) => ({
       ...prev,
@@ -216,6 +240,17 @@ const InventoryFormDialog = ({
     formData.append("quantity", String(formValues.quantity || 1));
     formData.append("condition", formValues.condition.trim());
 
+    formData.append("trackingUrl", formValues.trackingUrl.trim());
+    formData.append(
+      "isTrackingEnabled",
+      formValues.isTrackingEnabled ? "true" : "false",
+    );
+    formData.append(
+      "trackingFrequencyHours",
+      String(formValues.trackingFrequencyHours || 24),
+    );
+    formData.append("currency", formValues.currency || "MXN");
+
     selectedImages.forEach((file) => {
       formData.append("images", file);
     });
@@ -232,6 +267,12 @@ const InventoryFormDialog = ({
         Number(formValues.currentEstimatedValue || 0),
       ),
       condition: formValues.condition.trim(),
+      trackingUrl: formValues.trackingUrl.trim(),
+      isTrackingEnabled: String(formValues.isTrackingEnabled),
+      trackingFrequencyHours: String(
+        Number(formValues.trackingFrequencyHours || 24),
+      ),
+      currency: formValues.currency || "MXN",
     };
 
     const originalValues = {
@@ -240,6 +281,12 @@ const InventoryFormDialog = ({
         Number(initialValues?.currentEstimatedValue ?? 0),
       ),
       condition: initialValues?.condition ?? "",
+      trackingUrl: initialValues?.trackingUrl ?? "",
+      isTrackingEnabled: String(Boolean(initialValues?.isTrackingEnabled)),
+      trackingFrequencyHours: String(
+        Number(initialValues?.trackingFrequencyHours ?? 24),
+      ),
+      currency: initialValues?.currency ?? "MXN",
     };
 
     let hasChanges = false;
@@ -291,6 +338,23 @@ const InventoryFormDialog = ({
       }
 
       setFormError(backendMessage);
+    }
+  };
+
+  const getTrackingStatusConfig = (status) => {
+    const normalizedStatus = String(status || "").toLowerCase();
+
+    switch (normalizedStatus) {
+      case "success":
+        return { label: "Updated", color: "success" };
+      case "bot_protection":
+        return { label: "Retry scheduled", color: "warning" };
+      case "error":
+      case "not_found":
+      case "rate_limited":
+        return { label: "Tracking issue", color: "error" };
+      default:
+        return { label: "Queued", color: "default" };
     }
   };
 
@@ -455,10 +519,15 @@ const InventoryFormDialog = ({
                       label="Current estimated value"
                       name="currentEstimatedValue"
                       type="number"
-                      value={formValues.currentEstimatedValue}
+                      value={
+                        formValues.isTrackingEnabled
+                          ? ""
+                          : formValues.currentEstimatedValue
+                      }
                       onChange={handleChange}
                       fullWidth
-                      required
+                      required={!formValues.isTrackingEnabled}
+                      disabled={formValues.isTrackingEnabled}
                       inputProps={{ min: 0, step: "0.01" }}
                       InputProps={{
                         startAdornment: (
@@ -466,7 +535,12 @@ const InventoryFormDialog = ({
                         ),
                       }}
                       error={!!fieldErrors.currentEstimatedValue}
-                      helperText={fieldErrors.currentEstimatedValue || ""}
+                      helperText={
+                        fieldErrors.currentEstimatedValue ||
+                        (formValues.isTrackingEnabled
+                          ? "This value will be calculated automatically after tracking runs."
+                          : "")
+                      }
                     />
                   </Grid>
 
@@ -545,6 +619,77 @@ const InventoryFormDialog = ({
                       ))}
                     </TextField>
                   </Grid>
+
+                  <Grid size={12}>
+                    <Typography variant="h6" fontWeight={700} mb={1}>
+                      Automatic value tracking
+                    </Typography>
+                  </Grid>
+
+                  <Grid size={12}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="isTrackingEnabled"
+                          checked={formValues.isTrackingEnabled}
+                          onChange={handleChange}
+                        />
+                      }
+                      label="Enable automatic market value tracking"
+                    />
+                  </Grid>
+
+                  {formValues.isTrackingEnabled ? (
+                    <>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <TextField
+                          label="Tracking URL"
+                          name="trackingUrl"
+                          value={formValues.trackingUrl}
+                          onChange={handleChange}
+                          fullWidth
+                          error={!!fieldErrors.trackingUrl}
+                          helperText={
+                            fieldErrors.trackingUrl ||
+                            "Paste the product URL from Amazon, Mercado Libre, or another supported store."
+                          }
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, md: 3 }}>
+                        <TextField
+                          label="Tracking frequency (hours)"
+                          name="trackingFrequencyHours"
+                          type="number"
+                          value={formValues.trackingFrequencyHours}
+                          onChange={handleChange}
+                          fullWidth
+                          inputProps={{ min: 1, step: 1 }}
+                          error={!!fieldErrors.trackingFrequencyHours}
+                          helperText={fieldErrors.trackingFrequencyHours || ""}
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, md: 3 }}>
+                        <TextField
+                          select
+                          label="Currency"
+                          name="currency"
+                          value={formValues.currency}
+                          onChange={handleChange}
+                          fullWidth
+                          error={!!fieldErrors.currency}
+                          helperText={fieldErrors.currency || ""}
+                        >
+                          {currencyOptions.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                              {option.label}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                    </>
+                  ) : null}
 
                   <Grid size={12}>
                     <Stack spacing={1.5}>
@@ -754,6 +899,77 @@ const InventoryFormDialog = ({
                     </TextField>
                   </Grid>
 
+                  <Grid size={12}>
+                    <Typography variant="h6" fontWeight={700} mb={1}>
+                      Automatic value tracking
+                    </Typography>
+                  </Grid>
+
+                  <Grid size={12}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="isTrackingEnabled"
+                          checked={formValues.isTrackingEnabled}
+                          onChange={handleChange}
+                        />
+                      }
+                      label="Enable automatic market value tracking"
+                    />
+                  </Grid>
+
+                  {formValues.isTrackingEnabled ? (
+                    <>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <TextField
+                          label="Tracking URL"
+                          name="trackingUrl"
+                          value={formValues.trackingUrl}
+                          onChange={handleChange}
+                          fullWidth
+                          error={!!fieldErrors.trackingUrl}
+                          helperText={
+                            fieldErrors.trackingUrl ||
+                            "Paste the product URL from Amazon, Mercado Libre, or another supported store."
+                          }
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, md: 3 }}>
+                        <TextField
+                          label="Tracking frequency (hours)"
+                          name="trackingFrequencyHours"
+                          type="number"
+                          value={formValues.trackingFrequencyHours}
+                          onChange={handleChange}
+                          fullWidth
+                          inputProps={{ min: 1, step: 1 }}
+                          error={!!fieldErrors.trackingFrequencyHours}
+                          helperText={fieldErrors.trackingFrequencyHours || ""}
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, md: 3 }}>
+                        <TextField
+                          select
+                          label="Currency"
+                          name="currency"
+                          value={formValues.currency}
+                          onChange={handleChange}
+                          fullWidth
+                          error={!!fieldErrors.currency}
+                          helperText={fieldErrors.currency || ""}
+                        >
+                          {currencyOptions.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                              {option.label}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                    </>
+                  ) : null}
+
                   <Grid item size={12}>
                     <Stack spacing={1.5}>
                       <Typography variant="subtitle1" fontWeight={600}>
@@ -851,7 +1067,6 @@ const InventoryFormDialog = ({
                             overflowY: "auto",
                             pr: 1,
                             borderRadius: 2,
-
                             "&::-webkit-scrollbar": {
                               width: 6,
                             },

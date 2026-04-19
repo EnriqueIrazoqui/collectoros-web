@@ -11,6 +11,7 @@ import {
   DialogTitle,
   Divider,
   Grid,
+  Link,
   Paper,
   Stack,
   Typography,
@@ -22,6 +23,23 @@ import InventoryImage from "./InventoryImage";
 const formatDate = (value) => {
   if (!value) return "-";
   return new Date(value).toLocaleDateString("en-US");
+};
+
+const getTrackingStatusConfig = (status) => {
+  const normalizedStatus = String(status || "").toLowerCase();
+
+  switch (normalizedStatus) {
+    case "success":
+      return { label: "Updated", color: "success" };
+    case "bot_protection":
+      return { label: "Retry scheduled", color: "warning" };
+    case "error":
+    case "not_found":
+    case "rate_limited":
+      return { label: "Tracking issue", color: "error" };
+    default:
+      return { label: "Queued", color: "default" };
+  }
 };
 
 const DetailMetricCard = ({ label, value, color = "text.primary" }) => {
@@ -96,6 +114,8 @@ const InventoryDetailsDialog = ({
   const gain =
     Number(item?.currentEstimatedValue || 0) - Number(item?.purchasePrice || 0);
 
+  const trackingStatusConfig = getTrackingStatusConfig(item?.lastCheckStatus);
+
   return (
     <>
       <Dialog
@@ -143,6 +163,21 @@ const InventoryDetailsDialog = ({
                     size="small"
                     variant="outlined"
                   />
+
+                  {item?.isTrackingEnabled ? (
+                    <Chip
+                      label={trackingStatusConfig.label}
+                      size="small"
+                      color={trackingStatusConfig.color}
+                      variant="outlined"
+                    />
+                  ) : (
+                    <Chip
+                      label="Manual value"
+                      size="small"
+                      variant="outlined"
+                    />
+                  )}
                 </Stack>
               </Box>
 
@@ -247,6 +282,78 @@ const InventoryDetailsDialog = ({
                   <DetailItem
                     label="Updated at"
                     value={formatDate(item.updatedAt)}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" mb={0.5}>
+                      Tracking URL
+                    </Typography>
+
+                    {item.trackingUrl ? (
+                      <Link
+                        href={item.trackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        underline="hover"
+                        sx={{
+                          display: "inline-block",
+                          wordBreak: "break-word",
+                          overflowWrap: "anywhere",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {item.trackingUrl}
+                      </Link>
+                    ) : (
+                      <Typography variant="body1" fontWeight={600}>
+                        -
+                      </Typography>
+                    )}
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <DetailItem label="Currency" value={item.currency || "-"} />
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <DetailItem
+                    label="Tracking frequency"
+                    value={
+                      item.isTrackingEnabled
+                        ? `${item.trackingFrequencyHours || 24} hours`
+                        : "Disabled"
+                    }
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <DetailItem
+                    label="Last checked"
+                    value={formatDate(item.lastCheckedAt)}
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <DetailItem
+                    label="Next check"
+                    value={formatDate(item.nextCheckAt)}
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <DetailItem
+                    label="Last status"
+                    value={trackingStatusConfig.label}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <DetailItem
+                    label="Last error"
+                    value={item.lastErrorMessage || "-"}
                   />
                 </Grid>
 
