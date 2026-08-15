@@ -32,6 +32,15 @@ async function markWelcomeSeenRequest() {
   return data;
 }
 
+async function acceptInvitationRequest(payload) {
+  const { data } = await apiClient.post(
+    "/auth/accept-invitation",
+    payload,
+  );
+
+  return data;
+}
+
 export {
   loginRequest,
   refreshRequest,
@@ -39,4 +48,5 @@ export {
   getCurrentUserRequest,
   getMicrosoftAuthUrlRequest,
   markWelcomeSeenRequest,
+  acceptInvitationRequest,
 };
