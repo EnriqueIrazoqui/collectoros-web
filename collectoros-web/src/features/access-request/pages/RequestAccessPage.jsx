@@ -80,7 +80,7 @@ const RequestAccessPage = () => {
 
             <Button
               variant="contained"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/overview")}
             >
               Back to CollectorOS
             </Button>
