@@ -34,6 +34,17 @@ function AppRouter() {
             tokenExists ? (
               <Navigate to="/dashboard" replace />
             ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/overview"
+          element={
+            tokenExists ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
               <PublicOverviewPage />
             )
           }

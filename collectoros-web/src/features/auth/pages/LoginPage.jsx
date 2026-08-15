@@ -55,7 +55,7 @@ const LoginPage = () => {
           >
             <Button
               startIcon={<ArrowBackIcon />}
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/overview")}
               sx={{
                 mb: 1,
                 px: 0,
