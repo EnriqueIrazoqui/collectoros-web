@@ -6,19 +6,31 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ArticleIcon from "@mui/icons-material/Article";
 import NewReleasesIcon from "@mui/icons-material/NewReleases";
 import EditNoteIcon from "@mui/icons-material/EditNote";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
 
 export const navigationItems = [
   {
-    label: "Admin Users",
-    path: "/admin/users",
+    label: "Admin",
     icon: AdminPanelSettingsIcon,
     adminOnly: true,
-  },
-  {
-    label: "What's New Admin",
-    path: "/admin/whats-new",
-    icon: EditNoteIcon,
-    adminOnly: true,
+    children: [
+      {
+        label: "Access Requests",
+        path: "/admin/access-requests",
+        icon: HowToRegIcon,
+      },
+      {
+        label: "Users",
+        path: "/admin/users",
+        icon: PersonOutlineIcon,
+      },
+      {
+        label: "What's New Admin",
+        path: "/admin/whats-new",
+        icon: EditNoteIcon,
+      },
+    ],
   },
   {
     label: "Get Started",

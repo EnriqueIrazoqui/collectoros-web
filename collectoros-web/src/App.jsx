@@ -13,6 +13,10 @@ import AdminUsersPage from "../src/features/admin/pages/AdminUsersPage";
 import GetStartedPage from "../src/features/get-started/pages/GetStartedPage";
 import WhatsNewPage from "../src/features/whats-new/pages/WhatsNewPage";
 import WhatsNewAdminPage from "../src/features/whats-new/pages/WhatsNewAdminPage";
+import AcceptInvitationPage from "../src/features/auth/pages/AcceptInvitationPage";
+import PublicOverviewPage from "../src/features/public-overview/pages/PublicOverviewPage";
+import RequestAccessPage from "../src/features/access-request/pages/RequestAccessPage";
+import AdminAccessRequestsPage from "../src/features/admin/pages/AdminAccessRequestsPage";
 
 import AppLayout from "../src/components/layout/AppLayout";
 
@@ -30,7 +34,7 @@ function AppRouter() {
             tokenExists ? (
               <Navigate to="/dashboard" replace />
             ) : (
-              <Navigate to="/login" replace />
+              <PublicOverviewPage />
             )
           }
         />
@@ -38,13 +42,22 @@ function AppRouter() {
         <Route
           path="/login"
           element={
+            tokenExists ? <Navigate to="/dashboard" replace /> : <LoginPage />
+          }
+        />
+
+        <Route
+          path="/request-access"
+          element={
             tokenExists ? (
               <Navigate to="/dashboard" replace />
             ) : (
-              <LoginPage />
+              <RequestAccessPage />
             )
           }
         />
+
+        <Route path="/accept-invitation" element={<AcceptInvitationPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
@@ -58,6 +71,10 @@ function AppRouter() {
             <Route element={<AdminRoute />}>
               <Route path="/admin/users" element={<AdminUsersPage />} />
               <Route path="/admin/whats-new" element={<WhatsNewAdminPage />} />
+              <Route
+                path="/admin/access-requests"
+                element={<AdminAccessRequestsPage />}
+              />
             </Route>
           </Route>
         </Route>

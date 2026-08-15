@@ -50,16 +50,32 @@ function sortPriceHistoryDesc(history = []) {
 }
 
 function transformPriceHistoryForChart(history = []) {
-  return sortPriceHistoryAsc(history).map((entry) => ({
-    id: entry.id,
-    date: new Date(entry.createdAt).toLocaleDateString("en-US", {
-      month: "short",
-      day: "2-digit",
-    }),
-    fullDate: entry.createdAt,
-    price: Number(entry.price || 0),
-    source: entry.source || "Manual",
-  }));
+  const sortedHistory = sortPriceHistoryAsc(history);
+
+  return sortedHistory.map((entry, index) => {
+    const previousEntry = sortedHistory[index - 1];
+    const previousPrice = previousEntry
+      ? Number(previousEntry.price || 0)
+      : null;
+    const price = Number(entry.price || 0);
+    const change = previousPrice !== null ? price - previousPrice : 0;
+    const changePercent =
+      previousPrice && previousPrice > 0 ? (change / previousPrice) * 100 : 0;
+
+    return {
+      id: entry.id,
+      date: new Date(entry.createdAt).toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+      }),
+      fullDate: entry.createdAt,
+      price,
+      previousPrice,
+      change,
+      changePercent,
+      source: entry.source || "Manual",
+    };
+  });
 }
 
 function getHighestPriceHistoryRecord(history = []) {
@@ -99,8 +115,7 @@ function getPriceHistoryChangeFromFirst(history = []) {
   const lastPrice = Number(lastRecord.price || 0);
   const change = lastPrice - firstPrice;
 
-  const changePercent =
-    firstPrice > 0 ? (change / firstPrice) * 100 : 0;
+  const changePercent = firstPrice > 0 ? (change / firstPrice) * 100 : 0;
 
   return {
     firstRecord,

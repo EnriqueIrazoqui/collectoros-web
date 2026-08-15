@@ -10,6 +10,46 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import { formatCurrency } from "../../../utils/formatCurrency";
 
+const getSourceLabel = (source) => {
+  const normalizedSource = String(source || "").toLowerCase();
+
+  if (!normalizedSource || normalizedSource === "manual") {
+    return "Manual entry";
+  }
+
+  if (normalizedSource.includes("mercadolibre")) {
+    return "Mercado Libre";
+  }
+
+  if (normalizedSource.includes("amazon")) {
+    return "Amazon";
+  }
+
+  return source;
+};
+
+const getSourceType = (source) => {
+  const normalizedSource = String(source || "").toLowerCase();
+
+  if (!normalizedSource || normalizedSource === "manual") {
+    return "Manual";
+  }
+
+  return "Automatic";
+};
+
+const formatDate = (value) => {
+  if (!value) return "-";
+
+  return new Date(value).toLocaleString("es-MX", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 const PriceHistoryTable = ({ rows = [], onDelete, deletingId = null }) => {
   if (!rows.length) {
     return (
@@ -28,7 +68,7 @@ const PriceHistoryTable = ({ rows = [], onDelete, deletingId = null }) => {
             No price history yet
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Add the first price record to start tracking this item's value.
+            Add the first price record to start tracking this item&apos;s value.
           </Typography>
         </Stack>
       </Box>
@@ -37,8 +77,26 @@ const PriceHistoryTable = ({ rows = [], onDelete, deletingId = null }) => {
 
   return (
     <Stack spacing={1.5}>
-      {rows.map((row) => {
+      {rows.map((row, index) => {
         const isDeleting = deletingId === row.id;
+
+        const previousRow = rows[index + 1];
+        const hasPreviousRow = Boolean(previousRow);
+
+        const currentPrice = Number(row.price || 0);
+        const previousPrice = Number(previousRow?.price || 0);
+
+        const delta = hasPreviousRow ? currentPrice - previousPrice : 0;
+        const deltaPercent =
+          hasPreviousRow && previousPrice > 0
+            ? (delta / previousPrice) * 100
+            : 0;
+
+        const isPositive = delta > 0;
+        const isNegative = delta < 0;
+
+        const sourceLabel = getSourceLabel(row.source);
+        const sourceType = getSourceType(row.source);
 
         return (
           <Box
@@ -63,26 +121,50 @@ const PriceHistoryTable = ({ rows = [], onDelete, deletingId = null }) => {
                   alignItems={{ xs: "flex-start", sm: "center" }}
                   justifyContent="space-between"
                 >
-                  <Typography variant="h6" fontWeight={700}>
-                    {formatCurrency(row.price || 0)}
-                  </Typography>
+                  <Stack spacing={0.5}>
+                    <Typography variant="h6" fontWeight={700}>
+                      {formatCurrency(currentPrice)}
+                    </Typography>
 
-                  <Chip
-                    size="small"
-                    label={row.source || "Manual"}
-                    variant="outlined"
-                  />
+                    {hasPreviousRow ? (
+                      <Typography
+                        variant="body2"
+                        fontWeight={700}
+                        color={
+                          isPositive
+                            ? "success.main"
+                            : isNegative
+                              ? "error.main"
+                              : "text.secondary"
+                        }
+                      >
+                        {isPositive ? "+" : ""}
+                        {formatCurrency(delta)}{" "}
+                        {deltaPercent !== 0
+                          ? `(${isPositive ? "+" : ""}${deltaPercent.toFixed(2)}%)`
+                          : "(0.00%)"}
+                      </Typography>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        First recorded value
+                      </Typography>
+                    )}
+                  </Stack>
+
+                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                    <Chip size="small" label={sourceLabel} variant="outlined" />
+
+                    <Chip
+                      size="small"
+                      label={sourceType}
+                      color={sourceType === "Automatic" ? "primary" : "default"}
+                      variant="outlined"
+                    />
+                  </Stack>
                 </Stack>
 
                 <Typography variant="body2" color="text.secondary">
-                  Recorded on{" "}
-                  {new Date(row.createdAt).toLocaleString("es-MX", {
-                    year: "numeric",
-                    month: "short",
-                    day: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  Recorded on {formatDate(row.createdAt)}
                 </Typography>
               </Stack>
 
